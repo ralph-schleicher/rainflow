@@ -17,7 +17,7 @@ rainflow cycle counting.  The implementation has several features:
 
    * Cycles can be sorted and merged according to your needs.
 
-See the file ‘NEWS’ user-visible changes and new features compared
+See the file ‘NEWS’ for user-visible changes and new features compared
 to recent versions of the rs-rainflow library.
 
 The file ‘INSTALL’ contains information about how to build and install
@@ -25,3 +25,6 @@ the distribution.
 
 You may encounter bugs in this release.  If you do, please report them
 to the authors; see the file ‘AUTHORS’ for their mail addresses.
+
+The ‘matlab’ directory contains a Matlab MEX-file command with many
+nice features.  It works fine with GNU Octave, too.
