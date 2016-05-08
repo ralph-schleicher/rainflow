@@ -2,14 +2,15 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.50])
 
-AC_INIT([rs-rainflow], [20160506.1133])
+AC_INIT([rs-rainflow], [20160508.1803])
 AM_INIT_AUTOMAKE([foreign no-define no-dependencies])
 
 AC_CONFIG_SRCDIR([rs-rainflow.h])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile
 		 doc/Makefile
-		 t/Makefile])
+		 t/Makefile
+		 matlab/Makefile])
 
 dnl Optional features.
 AM_MAINTAINER_MODE
@@ -19,6 +20,8 @@ AC_PROG_CC_C99
 AC_PROG_INSTALL
 AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
+
+AC_CHECK_PROGS([MKOCTFILE], [mkoctfile], [true])
 
 dnl Checks for libraries.
 case $host in

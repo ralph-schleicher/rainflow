@@ -35,4 +35,12 @@
 
 EXTRA_DIST = cc4fat.m cc4fat.c rs-matrix.h rs-matrix-transpose.c
 
+all-local: cc4fat.mex
+
+cc4fat.mex: cc4fat.c ../rs-rainflow.h ../rs-rainflow.c rs-matrix.h rs-matrix-transpose.c
+	$(MKOCTFILE) -I.. --mex cc4fat.c ../rs-rainflow.c rs-matrix-transpose.c
+
+clean-local:
+	rm -f cc4fat.mex
+
 ## Makefile.am ends here

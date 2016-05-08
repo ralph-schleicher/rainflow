@@ -33,7 +33,7 @@
 
 ## Code:
 
-SUBDIRS = . doc t
+SUBDIRS = . doc t matlab
 
 lib_LTLIBRARIES = librs-rainflow.la
 include_HEADERS = rs-rainflow.h
