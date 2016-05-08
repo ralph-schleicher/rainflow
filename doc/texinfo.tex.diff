@@ -1,0 +1,14 @@
+diff -aud texinfo.tex.orig texinfo.tex
+--- texinfo.tex.orig	2015-10-28 21:14:34.000000000 +0100
++++ texinfo.tex	2016-05-05 18:56:36.330082457 +0200
+@@ -7257,7 +7257,7 @@
+     \df \tt
+     \def\temp{#2}% text of the return type
+     \ifx\temp\empty\else
+-      \tclose{\temp}% typeset the return type
++      \tclose{\sl\temp}% typeset the return type
+       \ifrettypeownline
+         % put return type on its own line; prohibit line break following:
+         \hfil\vadjust{\nobreak}\break  
+
+Diff finished.  Thu May  5 18:59:23 2016

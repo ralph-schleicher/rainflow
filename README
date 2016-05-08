@@ -1,0 +1,27 @@
+This is the rs-rainflow library, a collection of functions to perform
+rainflow cycle counting.  The implementation has several features:
+
+   * The procedure is re-entrant (but not thread safe), that means
+     you can call it multiple times in a row until all input data
+     is processed.
+
+   * Support for different signal data types.  You can switch the
+     signal data type between consecutive invocations.
+
+   * Support for signal labels.
+
+   * Support for alternative memory managers.
+
+   * Cycles can be cached or shifted (consumed) according to your
+     needs.
+
+   * Cycles can be sorted and merged according to your needs.
+
+See the file ‘NEWS’ user-visible changes and new features compared
+to recent versions of the rs-rainflow library.
+
+The file ‘INSTALL’ contains information about how to build and install
+the distribution.
+
+You may encounter bugs in this release.  If you do, please report them
+to the authors; see the file ‘AUTHORS’ for their mail addresses.
