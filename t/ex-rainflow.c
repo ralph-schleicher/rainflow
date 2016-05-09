@@ -37,14 +37,17 @@
 #include "ex.h"
 
 int
-main (void)
+main (int arg_count, char *arg_vec[])
 {
   rs_rainflow_t *obj;
   double *sig;
   size_t sig_len;
 
+  if (arg_count != 2)
+    abort ();
+
   /* Get signal history.  */
-  sig = read_binary_file ("sig1-double.bin", sizeof (double), &sig_len);
+  sig = read_binary_file (arg_vec[1], sizeof (double), &sig_len);
   if (sig == NULL)
     abort ();
 

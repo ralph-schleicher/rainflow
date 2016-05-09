@@ -2,10 +2,10 @@
 
 t=t-infinite
 
-./ex-infinite < sig1.csv > $t.csv
+./ex-infinite < $srcdir/sig1.csv > $t.csv
 test $? != 0 && exit 99
 
-diff -u rf1-merge.csv $t.csv > $t.diff
+diff -u $srcdir/rf1-merge.csv $t.csv > $t.diff
 test $? = 2 && exit 99
 
 if test -s $t.diff

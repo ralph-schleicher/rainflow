@@ -547,6 +547,11 @@ LDADD = libex.la
 libex_la_SOURCES = ex.h ex.c
 libex_la_LIBADD = ../librs-rainflow.la
 TESTS = t-infinite.sh t-rainflow.sh t-reservoir.sh
+AM_TESTS_ENVIRONMENT = srcdir='$(srcdir)'
+EXTRA_DIST = $(TESTS) \
+sig1.csv sig1-double.bin sig1-float.bin \
+rf1-merge.csv rf1-sort.csv rv1-sort.csv
+
 all: all-am
 
 .SUFFIXES:
