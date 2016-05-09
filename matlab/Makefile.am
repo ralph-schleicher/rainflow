@@ -33,12 +33,18 @@
 
 ## Code:
 
-EXTRA_DIST = cc4fat.m cc4fat.c rs-matrix.h rs-matrix-transpose.c
+noinst_LTLIBRARIES = libcc4fat.la
+
+libcc4fat_la_SOURCES = ../rs-rainflow.c rs-matrix.h rs-matrix-transpose.c
+libcc4fat_la_LDFLAGS = -shared
+
+EXTRA_DIST = cc4fat.m cc4fat.c
 
 all-local: cc4fat.mex
 
-cc4fat.mex: cc4fat.c ../rs-rainflow.h ../rs-rainflow.c rs-matrix.h rs-matrix-transpose.c
-	$(MKOCTFILE) -I.. --mex cc4fat.c ../rs-rainflow.c rs-matrix-transpose.c
+cc4fat.mex: cc4fat.c libcc4fat.la
+	$(MKOCTFILE) --mex -v -I$(srcdir) -I$(srcdir)/.. \
+	-s -o $@ $(srcdir)/cc4fat.c .libs/libcc4fat.a
 
 clean-local:
 	rm -f cc4fat.mex
