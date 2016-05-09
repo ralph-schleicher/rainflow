@@ -38,10 +38,17 @@ EXTRA_DIST = rs-rainflow.pdf texinfo.tex.diff
 info_TEXINFOS = rs-rainflow.texi
 rs_rainflow_TEXINFOS = package.texi
 
+all-local: $(srcdir)/rs-rainflow.pdf
+
 $(srcdir)/package.texi: $(srcdir)/../configure.ac
 	set -e ; cd $(srcdir) ; \
 	( echo 'set PACKAGE $(PACKAGE_NAME)' ; \
 	  echo 'set VERSION $(PACKAGE_VERSION)' ) | \
 	sed -e 's,@,@@,g' -e 's,^,@,' > package.texi
+
+$(srcdir)/rs-rainflow.pdf: rs-rainflow.pdf
+	if test x$(srcdir) = x. ; then : ; else \
+	  $(INSTALL_DATA) rs-rainflow.pdf $(srcdir) ; \
+	fi
 
 ## Makefile.am ends here
