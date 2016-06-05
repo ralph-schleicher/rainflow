@@ -686,7 +686,7 @@ history is incremented @var{incr} times the number of signal values
 copied.
 @end itemize
 
-When you call this function, you are resonsible for converting signal
+When you call this function, you are responsible for converting signal
 values from the signal history to double precision floating-point
 numbers.  This function replaces the built-in signal history access
 function installed by the @symb{rs_rainflow_set_signal_type} function.
@@ -1118,7 +1118,7 @@ Reservoir counting creates the same result as rainflow counting iff
 the signal history starts and ends with the absolute signal maximum.
 Otherwise, reservoir counting is slightly more conservative than
 rainflow counting.  Another property of reservoir counting is that
-the resutling cycle counting sequence only contains full cycles.
+the resulting cycle counting sequence only contains full cycles.
 However, you have to know the full signal history in advance so that
 you can find the global maximum.
 
