@@ -747,7 +747,7 @@ mostlyclean-am: mostlyclean-aminfo mostlyclean-generic \
 
 pdf: pdf-am
 
-pdf-am: $(PDFS)
+pdf-am: $(PDFS) pdf-local
 
 ps: ps-am
 
@@ -769,14 +769,14 @@ uninstall-am: uninstall-dvi-am uninstall-html-am uninstall-info-am \
 	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-aminfo maintainer-clean-generic mostlyclean \
 	mostlyclean-aminfo mostlyclean-generic mostlyclean-libtool pdf \
-	pdf-am ps ps-am tags-am uninstall uninstall-am \
+	pdf-am pdf-local ps ps-am tags-am uninstall uninstall-am \
 	uninstall-dvi-am uninstall-html-am uninstall-info-am \
 	uninstall-pdf-am uninstall-ps-am
 
 .PRECIOUS: Makefile
 
 
-all-local: $(srcdir)/rs-rainflow.pdf
+all-local: pdf-local
 
 $(srcdir)/package.texi: $(srcdir)/../configure.ac
 	set -e ; cd $(srcdir) ; \
@@ -784,7 +784,7 @@ $(srcdir)/package.texi: $(srcdir)/../configure.ac
 	  echo 'set VERSION $(PACKAGE_VERSION)' ) | \
 	sed -e 's,@,@@,g' -e 's,^,@,' > package.texi
 
-$(srcdir)/rs-rainflow.pdf: rs-rainflow.pdf
+pdf-local: rs-rainflow.pdf
 	if test x$(srcdir) = x. ; then : ; else \
 	  $(INSTALL_DATA) rs-rainflow.pdf $(srcdir) ; \
 	fi
