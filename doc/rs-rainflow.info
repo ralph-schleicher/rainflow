@@ -467,7 +467,7 @@ The individual functions are documented below.
           pointer to the signal history is incremented INCR times the
           number of signal values copied.
 
-     When you call this function, you are resonsible for converting
+     When you call this function, you are responsible for converting
      signal values from the signal history to double precision
      floating-point numbers.  This function replaces the built-in signal
      history access function installed by the
@@ -840,7 +840,7 @@ Reservoir counting creates the same result as rainflow counting iff the
 signal history starts and ends with the absolute signal maximum.
 Otherwise, reservoir counting is slightly more conservative than
 rainflow counting.  Another property of reservoir counting is that the
-resutling cycle counting sequence only contains full cycles.  However,
+resulting cycle counting sequence only contains full cycles.  However,
 you have to know the full signal history in advance so that you can find
 the global maximum.
 
@@ -1068,30 +1068,30 @@ Ref: rs_rainflow_capture13670
 Node: Customization14610
 Ref: rs_rainflow_set_signal_type15091
 Ref: rs_rainflow_set_read_signals16481
-Ref: rs_rainflow_set_shift_cycle18471
-Ref: rs_rainflow_set_length19786
-Ref: rs_rainflow_set_merge_cycles20783
-Node: Sorting and Merging21683
-Node: High-Level Procedures22227
-Ref: rs_rainflow_sort22423
-Node: Low-Level Procedures23339
-Ref: rs_rainflow_sort_cycles23534
-Ref: rs_rainflow_merge_cycles23661
-Node: Comparison Functions23790
-Ref: rs_rainflow_compare_descending23955
-Ref: rs_rainflow_compare_ascending24361
-Node: Enumerated Constants24765
-Node: Array Element Types24978
-Node: Extended Error Codes26209
-Ref: RS_RAINFLOW_ERROR_STACK_OVERFLOW26374
-Ref: RS_RAINFLOW_ERROR_CYCLE_OVERFLOW26469
-Node: Examples26577
-Node: Basic Example26901
-Node: Using Call-back Functions28102
-Node: Reservoir Cycle Counting29324
-Node: Auxiliary Procedures30670
-Node: Symbol Index32014
-Node: Concept Index35740
-Node: References38943
+Ref: rs_rainflow_set_shift_cycle18472
+Ref: rs_rainflow_set_length19787
+Ref: rs_rainflow_set_merge_cycles20784
+Node: Sorting and Merging21684
+Node: High-Level Procedures22228
+Ref: rs_rainflow_sort22424
+Node: Low-Level Procedures23340
+Ref: rs_rainflow_sort_cycles23535
+Ref: rs_rainflow_merge_cycles23662
+Node: Comparison Functions23791
+Ref: rs_rainflow_compare_descending23956
+Ref: rs_rainflow_compare_ascending24362
+Node: Enumerated Constants24766
+Node: Array Element Types24979
+Node: Extended Error Codes26210
+Ref: RS_RAINFLOW_ERROR_STACK_OVERFLOW26375
+Ref: RS_RAINFLOW_ERROR_CYCLE_OVERFLOW26470
+Node: Examples26578
+Node: Basic Example26902
+Node: Using Call-back Functions28103
+Node: Reservoir Cycle Counting29325
+Node: Auxiliary Procedures30671
+Node: Symbol Index32015
+Node: Concept Index35741
+Node: References38944
 
 End Tag Table
