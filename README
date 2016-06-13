@@ -8,7 +8,9 @@ rainflow cycle counting.  The implementation has several features:
    * Support for different signal data types.  You can switch the
      signal data type between consecutive invocations.
 
-   * Support for signal labels.
+   * Support for signal labels.  This feature enables you to resolve
+     information associated with a signal value, e.g. a load case
+     number, from a cycle of the cycle counting sequence.
 
    * Support for alternative memory managers.
 
