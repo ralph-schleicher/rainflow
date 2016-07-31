@@ -6,11 +6,6 @@
 
 @include package.texi
 
-@syncodeindex vr fn
-@syncodeindex tp fn
-@syncodeindex ky cp
-@syncodeindex pg cp
-
 @ifinfo
 @paragraphindent 0
 @end ifinfo
@@ -22,6 +17,11 @@
 
 @setchapternewpage on
 @deftypefnnewline off
+
+@syncodeindex vr fn
+@syncodeindex tp fn
+@syncodeindex ky cp
+@syncodeindex pg cp
 
 @c Symbol name.
 @macro symb{NAME}
@@ -1226,7 +1226,6 @@ print_cycles (FILE *stream, rs_rainflow_t *obj)
 
 @node Concept Index, References, Symbol Index, Top
 @unnumbered Concept Index
-
 
 @printindex cp
 
