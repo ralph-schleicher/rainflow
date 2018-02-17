@@ -43,24 +43,6 @@
 #include <float.h>
 #include <math.h>
 
-#ifdef _MSC_VER
-/* Microsoft Visual C.  */
-#if _MSC_VER >= 1600
-#include <stdint.h>
-#else /* _MSC_VER < 1600 */
-typedef signed __int8 int8_t;
-typedef unsigned __int8 uint8_t;
-typedef signed __int16 int16_t;
-typedef unsigned __int16 uint16_t;
-typedef signed __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef signed __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-#endif /* _MSC_VER < 1600 */
-#else /* not _MSC_VER */
-#include <stdint.h>
-#endif /* not _MSC_VER */
-
 #include "rs-rainflow.h"
 #include "rs-matrix.h"
 
@@ -231,27 +213,27 @@ copy_##S1##_##S2 (work_t *work, double *v, size_t c)			\
 def1 (S1, T1)								\
 def2 (S1, T1, double, double)						\
 def2 (S1, T1, single, float)						\
-def2 (S1, T1, int8, int8_t)						\
-def2 (S1, T1, uint8, uint8_t)						\
-def2 (S1, T1, int16, int16_t)						\
-def2 (S1, T1, uint16, uint16_t)						\
-def2 (S1, T1, int32, int32_t)						\
-def2 (S1, T1, uint32, uint32_t)						\
-def2 (S1, T1, int64, int64_t)						\
-def2 (S1, T1, uint64, uint64_t)						\
+def2 (S1, T1, int8, int8_T)						\
+def2 (S1, T1, uint8, uint8_T)						\
+def2 (S1, T1, int16, int16_T)						\
+def2 (S1, T1, uint16, uint16_T)						\
+def2 (S1, T1, int32, int32_T)						\
+def2 (S1, T1, uint32, uint32_T)						\
+def2 (S1, T1, int64, int64_T)						\
+def2 (S1, T1, uint64, uint64_T)						\
 def2 (S1, T1, logical, mxLogical)					\
 def2 (S1, T1, char, mxChar)
 
 def (double, double)
 def (single, float)
-def (int8, int8_t)
-def (uint8, uint8_t)
-def (int16, int16_t)
-def (uint16, uint16_t)
-def (int32, int32_t)
-def (uint32, uint32_t)
-def (int64, int64_t)
-def (uint64, uint64_t)
+def (int8, int8_T)
+def (uint8, uint8_T)
+def (int16, int16_T)
+def (uint16, uint16_T)
+def (int32, int32_T)
+def (uint32, uint32_T)
+def (int64, int64_T)
+def (uint64, uint64_T)
 def (logical, mxLogical)
 def (char, mxChar)
 
@@ -308,7 +290,7 @@ static type_t const types[TYPES] =
       TYPE_INT8,
       mxINT8_CLASS,
       RS_RAINFLOW_TYPE_INT8_T,
-      sizeof (int8_t),
+      sizeof (int8_T),
       (void *) indmax_int8,
       (void *) copy_int8,
       (void *) copy_int8_null,
@@ -331,7 +313,7 @@ static type_t const types[TYPES] =
       TYPE_UINT8,
       mxUINT8_CLASS,
       RS_RAINFLOW_TYPE_UINT8_T,
-      sizeof (uint8_t),
+      sizeof (uint8_T),
       (void *) indmax_uint8,
       (void *) copy_uint8,
       (void *) copy_uint8_null,
@@ -354,7 +336,7 @@ static type_t const types[TYPES] =
       TYPE_INT16,
       mxINT16_CLASS,
       RS_RAINFLOW_TYPE_INT16_T,
-      sizeof (int16_t),
+      sizeof (int16_T),
       (void *) indmax_int16,
       (void *) copy_int16,
       (void *) copy_int16_null,
@@ -377,7 +359,7 @@ static type_t const types[TYPES] =
       TYPE_UINT16,
       mxUINT16_CLASS,
       RS_RAINFLOW_TYPE_UINT16_T,
-      sizeof (uint16_t),
+      sizeof (uint16_T),
       (void *) indmax_uint16,
       (void *) copy_uint16,
       (void *) copy_uint16_null,
@@ -400,7 +382,7 @@ static type_t const types[TYPES] =
       TYPE_INT32,
       mxINT32_CLASS,
       RS_RAINFLOW_TYPE_INT32_T,
-      sizeof (int32_t),
+      sizeof (int32_T),
       (void *) indmax_int32,
       (void *) copy_int32,
       (void *) copy_int32_null,
@@ -423,7 +405,7 @@ static type_t const types[TYPES] =
       TYPE_UINT32,
       mxUINT32_CLASS,
       RS_RAINFLOW_TYPE_UINT32_T,
-      sizeof (uint32_t),
+      sizeof (uint32_T),
       (void *) indmax_uint32,
       (void *) copy_uint32,
       (void *) copy_uint32_null,
@@ -446,7 +428,7 @@ static type_t const types[TYPES] =
       TYPE_INT64,
       mxINT64_CLASS,
       RS_RAINFLOW_TYPE_INT64_T,
-      sizeof (int64_t),
+      sizeof (int64_T),
       (void *) indmax_int64,
       (void *) copy_int64,
       (void *) copy_int64_null,
@@ -469,7 +451,7 @@ static type_t const types[TYPES] =
       TYPE_UINT64,
       mxUINT64_CLASS,
       RS_RAINFLOW_TYPE_UINT64_T,
-      sizeof (uint64_t),
+      sizeof (uint64_T),
       (void *) indmax_uint64,
       (void *) copy_uint64,
       (void *) copy_uint64_null,
@@ -611,10 +593,10 @@ find_type (mxArray const *a)
 #endif /* FLT_RADIX != 2 */
 
 static int
-int64_out_of_range_p (int64_t const *v, size_t c)
+int64_out_of_range_p (int64_T const *v, size_t c)
 {
-  static int64_t const min = flintmin (int64_t);
-  static int64_t const max = flintmax (int64_t);
+  static int64_T const min = flintmin (int64_T);
+  static int64_T const max = flintmax (int64_T);
 
   for (; c > 0; --c, ++v)
     {
@@ -626,9 +608,9 @@ int64_out_of_range_p (int64_t const *v, size_t c)
 }
 
 static int
-uint64_out_of_range_p (uint64_t const *v, size_t c)
+uint64_out_of_range_p (uint64_T const *v, size_t c)
 {
-  static uint64_t const max = flintmax (uint64_t);
+  static uint64_T const max = flintmax (uint64_T);
 
   for (; c > 0; --c, ++v)
     {
