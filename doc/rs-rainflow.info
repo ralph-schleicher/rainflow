@@ -1,8 +1,8 @@
-This is rs-rainflow.info, produced by makeinfo version 6.1 from
+This is rs-rainflow.info, produced by makeinfo version 6.5 from
 rs-rainflow.texi.
 
 This is the reference manual for the 'rs-rainflow' library version
-20160508.1803.
+20180217.1414.
 
 Copyright (C) 2015 Ralph Schleicher
 
@@ -21,7 +21,7 @@ Rainflow Cycle Counting
 ***********************
 
 This is the reference manual for the 'rs-rainflow' library version
-20160508.1803.
+20180217.1414.
 
 Copyright (C) 2015 Ralph Schleicher
 
