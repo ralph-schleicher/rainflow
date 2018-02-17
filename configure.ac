@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.50])
 
-AC_INIT([rs-rainflow], [20160508.1803])
+AC_INIT([rs-rainflow], [20180217.1414])
 AM_INIT_AUTOMAKE([foreign no-define no-dependencies])
 
 AC_CONFIG_SRCDIR([rs-rainflow.h])
