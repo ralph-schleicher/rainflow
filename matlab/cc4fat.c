@@ -585,12 +585,17 @@ find_type (mxArray const *a)
 
 /* Largest integral number that can be stored in a 'double' without
    loss of precision.  */
+#ifdef __LCC__
+#define flintmax(T) ((T)  9007199254740992LL)
+#define flintmin(T) ((T) -9007199254740992LL)
+#else /* not __LCC__ */
 #if FLT_RADIX == 2
 #define flintmax(T) (((T) 1) << DBL_MANT_DIG)
 #define flintmin(T) (((T) 0) - flintmax (T))
 #else /* FLT_RADIX != 2 */
 #error "Fix me"
 #endif /* FLT_RADIX != 2 */
+#endif /* not __LCC__ */
 
 static int
 int64_out_of_range_p (int64_T const *v, size_t c)
