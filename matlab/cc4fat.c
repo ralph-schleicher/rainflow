@@ -628,12 +628,11 @@ int64_out_of_range_p (int64_t const *v, size_t c)
 static int
 uint64_out_of_range_p (uint64_t const *v, size_t c)
 {
-  static uint64_t const min = 0;
   static uint64_t const max = flintmax (uint64_t);
 
   for (; c > 0; --c, ++v)
     {
-      if (*v < min || *v > max)
+      if (*v > max)
 	return 1;
     }
 
