@@ -53,7 +53,30 @@ typedef signed __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 #endif /* _MSC_VER < 1600 */
 #else /* not _MSC_VER */
+#ifdef __LCC__
+#if CHAR_MAX == 127
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+#else /* CHAR_MAX != 127 */
+#error "Fix me"
+#endif /* CHAR_MAX != 127 */
+#if SHRT_MAX == 32767
+typedef signed short int int16_t;
+typedef unsigned short int uint16_t;
+#else /* SHRT_MAX != 32767 */
+#error "Fix me"
+#endif /* SHRT_MAX != 32767 */
+#if INT_MAX == 2147483647
+typedef signed int int32_t;
+typedef unsigned int uint32_t;
+#else /* INT_MAX != 2147483647 */
+#error "Fix me"
+#endif /* INT_MAX != 2147483647 */
+typedef signed __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#else /* not __LCC__  */
 #include <stdint.h>
+#endif /* not __LCC__  */
 #endif /* not _MSC_VER */
 
 #include "rs-rainflow.h"
@@ -72,12 +95,12 @@ typedef unsigned __int64 uint64_t;
 #define SIZE_MAX ((size_t) -1)
 #endif
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define SIZEOF_PAGE 4096
-#else /* not _MSC_VER */
+#else /* not _WIN32 */
 #include <unistd.h>
 #define SIZEOF_PAGE (getpagesize ())
-#endif /* not _MSC_VER */
+#endif /* not _WIN32 */
 
 /* Rainflow cycle counting object data structure.  */
 struct rs_rainflow
