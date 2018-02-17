@@ -1,15 +1,15 @@
---- texinfo.tex.orig	2015-07-30 20:20:58.000000000 +0200
-+++ texinfo.tex	2016-07-31 15:17:11.275034700 +0200
+--- texinfo.tex.orig	2018-02-17 15:15:35.681113789 +0100
++++ texinfo.tex	2018-02-17 15:21:38.476496638 +0100
 @@ -3,7 +3,7 @@
  % Load plain if necessary, i.e., if running under initex.
  \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
  %
--\def\texinfoversion{2015-07-01.07}
-+\def\texinfoversion{2016-07-31.15}
+-\def\texinfoversion{2017-06-04.19}
++\def\texinfoversion{2018-02-17.15}
  %
  % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
  % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-@@ -7176,7 +7176,7 @@
+@@ -7892,7 +7892,7 @@
      \df \tt
      \def\temp{#2}% text of the return type
      \ifx\temp\empty\else
@@ -18,14 +18,3 @@
        \ifrettypeownline
          % put return type on its own line; prohibit line break following:
          \hfil\vadjust{\nobreak}\break  
-@@ -10186,8 +10186,8 @@
- \def\activedoublequote{{\tt\char34}}
- \let"=\activedoublequote
- \catcode`\~=\active \def\activetilde{{\tt\char126}} \let~ = \activetilde
--\chardef\hat=`\^
--\catcode`\^=\active \def\activehat{{\tt \hat}} \let^ = \activehat
-+\chardef\Hat=`\^
-+\catcode`\^=\active \def\activehat{{\tt \Hat}} \let^ = \activehat
- 
- \catcode`\_=\active
- \def_{\ifusingtt\normalunderscore\_}
