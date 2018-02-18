@@ -107,10 +107,9 @@ struct rs_rainflow
   {
     /* Latest cycle.
 
-       First element is the signal amplitude, second element is the mean
-       value, and the third element is the cycle count (i.e. the number
-       of half cycles).  Optional fourth and fifth element are the
-       trough and peak signal label.
+       First and second element represent the cycle and the third
+       element is the cycle count (i.e. the number of half cycles).
+       Optional fourth and fifth element are the signal labels.
 
        Address is only valid if CYCLE_LEN is greater than zero.  */
     double *cycle;
@@ -224,6 +223,23 @@ struct rs_rainflow
     void *(*malloc_fun) (size_t);
     void *(*realloc_fun) (void *, size_t);
     void (*free_fun) (void *);
+
+    /* Cycle representation, i.e. the meaning of the first and second
+       element of a cycle.
+
+       RS_RAINFLOW_AMPLITUDE_MEAN
+            First element is the signal amplitude and the second element
+            is the signal mean.
+
+       RS_RAINFLOW_RANGE_MEAN
+            First element is the signal range, i.e. two times the signal
+            amplitude, and the second element is the signal mean.
+
+       RS_RAINFLOW_FROM_TO
+            First element is the ‘from’ signal value and the second
+            element is the ‘to’ signal value, i.e. the extrema values
+            of the cycle in chronological order.  */
+    int style;
 
     /* Non-zero means that rainflow counting has started.  */
     int busy:2;
@@ -523,6 +539,8 @@ init (rs_rainflow_t *obj)
   obj->shift_fun = NULL;
   obj->shift_arg = NULL;
 
+  obj->style = RS_RAINFLOW_AMPLITUDE_MEAN;
+
   obj->busy = SETUP;
   obj->first = 0;
   obj->last = 0;
@@ -678,36 +696,44 @@ setup (rs_rainflow_t *obj, size_t sig_len)
 }
 
 static_inline int
-add_cycle (rs_rainflow_t *obj, double const *a, double const *b, int count)
+add_cycle (rs_rainflow_t *obj, double const *to, double const *from, int count)
 {
-  double ampl, mean;
+  double cycle[2];
   double label[2];
 
-  /* Signal amplitude.
+  if (obj->style == RS_RAINFLOW_FROM_TO)
+    {
+      cycle[0] = *from;
+      cycle[1] = *to;
+    }
+  else
+    {
+      double ampl, mean;
 
-     If the signal amplitude is too small, the original trough and peak
-     signal value can't be calculated exactly from the signal amplitude
-     and mean value.  */
-  ampl = fabs (b[0] - a[0]) / 2.0;
-  if (ampl < (DBL_EPSILON / 2.0))
-    return 0;
+      /* Signal amplitude.
 
-  /* Mean value.  */
-  mean = (a[0] + b[0]) / 2.0;
+	 If the signal amplitude is too small, the original trough and peak
+	 signal value can't be calculated exactly from the signal amplitude
+	 and mean value.  */
+      ampl = fabs (to[0] - from[0]) / 2.0;
+      if (ampl < (DBL_EPSILON / 2.0))
+	return 0;
 
-  /* Save signal labels in ascending order of signal values.  */
+      /* Mean value.  */
+      mean = (to[0] + from[0]) / 2.0;
+
+      cycle[0] = ampl;
+      cycle[1] = mean;
+
+      if (obj->style == RS_RAINFLOW_RANGE_MEAN)
+	cycle[0] *= 2.0;
+    }
+
+  /* Save signal labels in chronological order of the signal values.  */
   if (obj->label != 0)
     {
-      if (b[0] < a[0])
-	{
-	  memcpy (label + 0, b + 1, sizeof (double));
-	  memcpy (label + 1, a + 1, sizeof (double));
-	}
-      else
-	{
-	  memcpy (label + 0, a + 1, sizeof (double));
-	  memcpy (label + 1, b + 1, sizeof (double));
-	}
+      memcpy (label + 0, from + 1, sizeof (double));
+      memcpy (label + 1, to + 1, sizeof (double));
     }
 
   /* Check for repeating cycle.
@@ -716,8 +742,8 @@ add_cycle (rs_rainflow_t *obj, double const *a, double const *b, int count)
      and if the signal labels are equal.  */
   if (obj->merge != 0
       && obj->cycle_len > 0
-      && obj->cycle[0] == ampl
-      && obj->cycle[1] == mean
+      && obj->cycle[0] == cycle[0]
+      && obj->cycle[1] == cycle[1]
       && (obj->label == 0
 	  || memcmp (obj->cycle + 3, label, 2 * sizeof (double)) == 0))
     {
@@ -786,8 +812,8 @@ add_cycle (rs_rainflow_t *obj, double const *a, double const *b, int count)
 	}
 
       /* Save cycle.  */
-      obj->cycle[0] = ampl;
-      obj->cycle[1] = mean;
+      obj->cycle[0] = cycle[0];
+      obj->cycle[1] = cycle[1];
       obj->cycle[2] = count;
 
       if (obj->label != 0)
@@ -1065,6 +1091,33 @@ rs_rainflow_set_merge_cycles (rs_rainflow_t *obj, int merge)
     }
 
   obj->merge = (merge != 0 ? 1 : 0);
+
+  return 0;
+}
+
+/* Customize the cycle representation.  */
+int
+rs_rainflow_set_cycle_style (rs_rainflow_t *obj, int style)
+{
+  if (obj == NULL)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  if (obj->busy != SETUP)
+    {
+      errno = EBUSY;
+      return -1;
+    }
+
+  if (style < 0 || style >= RS_RAINFLOW_CYCLE_REPRESENTATIONS)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  obj->style = style;
 
   return 0;
 }

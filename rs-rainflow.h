@@ -49,6 +49,16 @@ RS_RAINFLOW_BEGIN_DECL
 /* Opaque rainflow cycle counting object.  */
 typedef struct rs_rainflow rs_rainflow_t;
 
+/* Cycle representations.  */
+enum
+  {
+    RS_RAINFLOW_AMPLITUDE_MEAN = 0,
+    RS_RAINFLOW_RANGE_MEAN = 1,
+    RS_RAINFLOW_FROM_TO = 2,
+
+    RS_RAINFLOW_CYCLE_REPRESENTATIONS
+  };
+
 /* Predefined element data types.  */
 enum
   {
@@ -110,6 +120,7 @@ extern int rs_rainflow_set_shift_cycle (rs_rainflow_t *__obj, void (*__fun) (voi
 extern int rs_rainflow_set_signal_label (rs_rainflow_t *__obj, int __label);
 extern int rs_rainflow_set_signal_index (rs_rainflow_t *__obj, double __index);
 extern int rs_rainflow_set_merge_cycles (rs_rainflow_t *__obj, int __merge);
+extern int rs_rainflow_set_cycle_style (rs_rainflow_t *__obj, int __style);
 
 extern int rs_rainflow_clear (rs_rainflow_t *__obj);
 
