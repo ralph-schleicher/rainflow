@@ -80,6 +80,11 @@
 %      have the usual meaning, T is the start time of the cycle,
 %      and P is the period of one full cycle.
 %
+% -first, -third
+%      Place the cycle count at the beginning of a cycle, i.e. each
+%      cycle has the form [N, SA, SM, ...].  Default is the third
+%      element.
+%
 % -transpose, -no-transpose
 %      Transpose the resulting cycle counting sequence, i.e. each
 %      cycle is a column vector instead of a row vector.

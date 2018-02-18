@@ -713,6 +713,7 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
   int sort;
   int full;
   int period;
+  int first;
   int transp;
 
   mxArray const *y;
@@ -819,6 +820,9 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
   full = 1;
   /* Non-zero means to calculate start time and period.  */
   period = 0;
+  /* Non-zero means to place the cycle count at the beginning
+     of a cycle.  */
+  first = 0;
   /* Non-zero means to return cycles as column vectors.  */
   transp = 0;
 
@@ -879,6 +883,10 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
 	period = 1;
       else if (strcmp (str, "-no-time") == 0)
 	period = 0;
+      else if (strcmp (str, "-first") == 0)
+	first = 1;
+      else if (strcmp (str, "-third") == 0)
+	first = 0;
       else if (strcmp (str, "-transpose") == 0)
 	transp = 1;
       else if (strcmp (str, "-no-transpose") == 0)
@@ -1063,6 +1071,25 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
 	{
 	  /* Number of full cycles.  */
 	  *v /= 2.0;
+
+	  /* Next cycle.  */
+	  v += c_elem;
+	}
+    }
+
+  /* Place the cycle count at the beginning of a cycle.  */
+  if (first != 0)
+    {
+      v = c_buf;
+
+      for (k = c_len; k > 0; --k)
+	{
+	  double tem;
+
+	  tem = v[2];
+	  v[2] = v[1];
+	  v[1] = v[0];
+	  v[0] = tem;
 
 	  /* Next cycle.  */
 	  v += c_elem;
