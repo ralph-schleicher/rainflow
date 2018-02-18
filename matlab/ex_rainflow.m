@@ -57,10 +57,8 @@ plot(0:lX,X,'o',0:1/fs:lX,Y);
 %     0.5      8           0    6        7
 %     0.5      6           1    7        8
 
-c = cc4fat(Y, '-label', '-zero');
-c(:, 4:5) = c(:, 4:5) ./ fs;
-
-T = [c(:, 3), c(:, 1) .* 2, c(:, 2), min(c(:, 4:5), [], 2), max(c(:, 4:5), [], 2)]
+T = cc4fat(Y, '-first', '-range-mean', '-label', '-zero');
+T(:, 4:5) = T(:, 4:5) ./ fs
 
 % Matlab
 %
@@ -150,9 +148,7 @@ plot(X,Y,'o',t,Z);
 %     0.5       9        0.5     4        8
 %     0.5      10          1     8       15
 
-c = cc4fat(Z, t);
-
-TT = [c(:, 3), c(:, 1) .* 2, c(:, 2), min(c(:, 4:5), [], 2), max(c(:, 4:5), [], 2)]
+TT = cc4fat(Z, t, '-first', '-range-mean')
 
 % Matlab
 %
@@ -215,15 +211,10 @@ close('all');
 %     0.5000    9.0000    0.5000    4.0000    7.0000
 %     0.5000   10.0000    1.0000    7.0000   14.0000
 
-c = cc4fat([-2 1 -3 5 -1 3 -4 4 -3 1 -2 3 2 6], 'ABCDEFGHJKLMNP');
+c = cc4fat([-2 1 -3 5 -1 3 -4 4 -3 1 -2 3 2 6], 'ABCDEFGHJKLMNP', '-first', '-range-mean');
+T = [num2cell(c(:, 1:3)), cellstr(char(c(:, 4))), cellstr(char(c(:, 5)))]
 
-Count = c(:, 3);
-Range = c(:, 1) .* 2;
-Mean = c(:, 2);
-Start = char(min(c(:, 4:5), [], 2));
-End = char(max(c(:, 4:5), [], 2));
-
-T = [num2cell(Count), num2cell(Range), num2cell(Mean), cellstr(Start), cellstr(End)]
+q = cc4fat([-2 1 -3 5 -1 3 -4 4 -3 1 -2 3 2 6], '-first', '-range-mean', '-label')
 
 % Matlab
 %
