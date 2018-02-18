@@ -1,2 +1,2 @@
 @set PACKAGE rs-rainflow
-@set VERSION 20180217.1414
+@set VERSION 20180218.2240

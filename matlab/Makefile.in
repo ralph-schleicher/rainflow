@@ -131,7 +131,8 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 libcc4fat_la_LIBADD =
-am_libcc4fat_la_OBJECTS = rs-rainflow.lo rs-matrix-transpose.lo
+am__dirstamp = $(am__leading_dot)dirstamp
+am_libcc4fat_la_OBJECTS = ../rs-rainflow.lo rs-matrix-transpose.lo
 libcc4fat_la_OBJECTS = $(am_libcc4fat_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -364,12 +365,18 @@ clean-noinstLTLIBRARIES:
 	  echo rm -f $${locs}; \
 	  rm -f $${locs}; \
 	}
+../$(am__dirstamp):
+	@$(MKDIR_P) ..
+	@: > ../$(am__dirstamp)
+../rs-rainflow.lo: ../$(am__dirstamp)
 
 libcc4fat.la: $(libcc4fat_la_OBJECTS) $(libcc4fat_la_DEPENDENCIES) $(EXTRA_libcc4fat_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libcc4fat_la_LINK)  $(libcc4fat_la_OBJECTS) $(libcc4fat_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
+	-rm -f ../*.$(OBJEXT)
+	-rm -f ../*.lo
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -383,14 +390,12 @@ distclean-compile:
 .c.lo:
 	$(AM_V_CC)$(LTCOMPILE) -c -o $@ $<
 
-rs-rainflow.lo: ../rs-rainflow.c
-	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o rs-rainflow.lo `test -f '../rs-rainflow.c' || echo '$(srcdir)/'`../rs-rainflow.c
-
 mostlyclean-libtool:
 	-rm -f *.lo
 
 clean-libtool:
 	-rm -rf .libs _libs
+	-rm -rf ../.libs ../_libs
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
@@ -504,6 +509,7 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-rm -f ../$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
