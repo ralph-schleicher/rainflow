@@ -17,8 +17,9 @@
 % the form [SA, SM, N] where SA is the signal amplitude, SM is the
 % signal mean, and N is the cycle count.  If signal labeling is in
 % effect, each row in C is of the form [SA, SM, N, T1, T2] where SA,
-% SM, and N have the same meaning as before, T1 is the signal label
-% of the trough value, and T2 is the signal label of the peak value.
+% SM, and N have the same meaning as before and T1 and T2 are the
+% signal labels of the cycle's extrema values in chronological
+% order.
 %
 % Options:
 %
@@ -34,6 +35,15 @@
 %      than rainflow counting.  Another property of reservoir
 %      counting is that the resutling cycle counting sequence
 %      only contains full cycles.
+%
+% -from-to, -range-mean, -amplitude-mean
+%      Select the cycle representation.  Default is to use the
+%      signal amplitude and signal mean (see above).  Range/mean
+%      is like amplitude/mean except that the signal amplitude is
+%      replaced by the signal range, i.e. two times the signal
+%      amplitude.  With from/to cycle representation a cycle has
+%      the form [S1, S2, N] where S1 and S2 are the extrema values
+%      of the cycle in chronological order.
 %
 % -label, -no-label
 %      Turn on implicit labeling of signal values, i.e. assign a
@@ -52,12 +62,13 @@
 %      merge similar consecutive cycles by adding the individual
 %      cycle counts.  This optimization reduces the length of the
 %      cycle counting sequence without loosing any information.
-%      Cycles are similar if the signal amplitude, mean value,
-%      and the optional signal labels are equal.
+%      Cycles are similar if the cycle representation and the
+%      optional signal labels are equal.
 %
 % -sort, -no-sort
 %      Sort cycles by amplitude and mean value in descending
-%      order.
+%      order.  This option has no effect if from/to cycle
+%      representation is enabled.
 %
 % -half, -full
 %      Express the cycle count N as the number of half cycles.

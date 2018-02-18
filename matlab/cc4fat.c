@@ -706,6 +706,7 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
   work_t work[1];
   void *copy;
   int method;
+  int style;
   int label;
   int base;
   int merge;
@@ -804,6 +805,8 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
 
   /* Cycle counting method.  */
   method = METHOD_RAINFLOW;
+  /* Cycle representation.  */
+  style = RS_RAINFLOW_AMPLITUDE_MEAN;
   /* Non-zero means to label signal values.  */
   label = (t != NULL ? 1 : 0);
   /* Value of the first implicit signal label.  */
@@ -838,6 +841,12 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
 	method = METHOD_RAINFLOW;
       else if (strcmp (str, "-reservoir") == 0)
 	method = METHOD_RESERVOIR;
+      else if (strcmp (str, "-from-to") == 0)
+	style = RS_RAINFLOW_FROM_TO;
+      else if (strcmp (str, "-range-mean") == 0)
+	style = RS_RAINFLOW_RANGE_MEAN;
+      else if (strcmp (str, "-amplitude-mean") == 0)
+	style = RS_RAINFLOW_AMPLITUDE_MEAN;
       else if (strcmp (str, "-label") == 0)
 	label = 1;
       else if (strcmp (str, "-no-label") == 0)
@@ -882,6 +891,9 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
       --arg_count;
       ++arg_vec;
     }
+
+  if (style == RS_RAINFLOW_FROM_TO)
+    sort = 0;
 
   if (label == 0)
     {
@@ -930,6 +942,9 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
     ebug ();
 
   if (rs_rainflow_set_merge_cycles (obj, merge) != 0)
+    ebug ();
+
+  if (rs_rainflow_set_cycle_style (obj, style) != 0)
     ebug ();
 
   /* Initialize the work variables.  */
