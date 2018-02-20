@@ -45,6 +45,15 @@
 %      the form [S1, S2, N] where S1 and S2 are the extrema values
 %      of the cycle in chronological order.
 %
+% -sign, -no-sign
+%      Retain the sign of the signal amplitude or signal range.
+%      Default is to utilize the absolute value for the cycle
+%      representation.  This option has no effect for the from/to
+%      cycle representation since the orientation of the cycle
+%      is implied in the cycle representation.  If signed cycle
+%      representation is enabled, the from/to signal values can
+%      be calculated as S1=SM-SA and S2=SM+SA.
+%
 % -label, -no-label
 %      Turn on implicit labeling of signal values, i.e. assign a
 %      one-based index to the signal values.  This option has no

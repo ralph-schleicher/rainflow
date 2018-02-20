@@ -707,6 +707,7 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
   void *copy;
   int method;
   int style;
+  int sign;
   int label;
   int base;
   int merge;
@@ -808,6 +809,9 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
   method = METHOD_RAINFLOW;
   /* Cycle representation.  */
   style = RS_RAINFLOW_AMPLITUDE_MEAN;
+  /* Non-zero means to retain the sign of the signal amplitude
+     or signal range.  */
+  sign = 0;
   /* Non-zero means to label signal values.  */
   label = (t != NULL ? 1 : 0);
   /* Value of the first implicit signal label.  */
@@ -851,6 +855,10 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
 	style = RS_RAINFLOW_RANGE_MEAN;
       else if (strcmp (str, "-amplitude-mean") == 0)
 	style = RS_RAINFLOW_AMPLITUDE_MEAN;
+      else if (strcmp (str, "-sign") == 0)
+	sign = 1;
+      else if (strcmp (str, "-no-sign") == 0)
+	sign = 0;
       else if (strcmp (str, "-label") == 0)
 	label = 1;
       else if (strcmp (str, "-no-label") == 0)
@@ -953,6 +961,9 @@ mexFunction (int val_count, mxArray *val_vec[], int arg_count, const mxArray *ar
     ebug ();
 
   if (rs_rainflow_set_cycle_style (obj, style) != 0)
+    ebug ();
+
+  if (rs_rainflow_set_cycle_sign (obj, sign) != 0)
     ebug ();
 
   /* Initialize the work variables.  */
