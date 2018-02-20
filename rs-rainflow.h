@@ -123,6 +123,7 @@ extern int rs_rainflow_set_signal_label (rs_rainflow_t *__obj, int __label);
 extern int rs_rainflow_set_signal_index (rs_rainflow_t *__obj, double __index);
 extern int rs_rainflow_set_merge_cycles (rs_rainflow_t *__obj, int __merge);
 extern int rs_rainflow_set_cycle_style (rs_rainflow_t *__obj, int __style);
+extern int rs_rainflow_set_cycle_sign (rs_rainflow_t *__obj, int __flag);
 
 /* Sorting and merging.  */
 extern int rs_rainflow_sort (rs_rainflow_t *__obj, int (*__compare) (void const *, void const *));

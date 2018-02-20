@@ -255,6 +255,10 @@ struct rs_rainflow
     /* Non-zero means to label signal values.  */
     int label:1;
 
+    /* Non-zero means to retain the sign of the signal amplitude
+       or signal range.  */
+    int sign:1;
+
     /* Non-zero means to merge contiguous cycles.  */
     int merge:1;
   };
@@ -547,6 +551,7 @@ init (rs_rainflow_t *obj)
   obj->first = 0;
   obj->last = 0;
   obj->label = 0;
+  obj->sign = 0;
   obj->merge = 1;
 }
 
@@ -714,9 +719,9 @@ add_cycle (rs_rainflow_t *obj, double const *to, double const *from, int count)
 
       /* Signal amplitude.
 
-	 If the signal amplitude is too small, the original trough and peak
-	 signal value can't be calculated exactly from the signal amplitude
-	 and mean value.  */
+	 If the signal amplitude is too small, the original trough and
+	 peak signal value can't be calculated exactly from the signal
+	 amplitude and mean value.  */
       ampl = fabs (to[0] - from[0]) / 2.0;
       if (ampl < (DBL_EPSILON / 2.0))
 	return 0;
@@ -729,6 +734,9 @@ add_cycle (rs_rainflow_t *obj, double const *to, double const *from, int count)
 
       if (obj->style == RS_RAINFLOW_RANGE_MEAN)
 	cycle[0] *= 2.0;
+
+      if (obj->sign != 0 && to[0] < from[0])
+	cycle[0] = - cycle[0];
     }
 
   /* Save signal labels in chronological order of the signal values.  */
@@ -1127,6 +1135,27 @@ rs_rainflow_set_cycle_style (rs_rainflow_t *obj, int style)
     }
 
   obj->style = style;
+
+  return 0;
+}
+
+/* Customize signed cycles.  */
+int
+rs_rainflow_set_cycle_sign (rs_rainflow_t *obj, int flag)
+{
+  if (obj == NULL)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  if (obj->busy != SETUP)
+    {
+      errno = EBUSY;
+      return -1;
+    }
+
+  obj->sign = (flag != 0 ? 1 : 0);
 
   return 0;
 }
