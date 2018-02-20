@@ -184,8 +184,10 @@ struct rs_rainflow
        First argument is the signal history pointer.
        Second argument is the destination address.
        Third argument is the number of signal values to read.  */
-    size_t (*sig_fun1) (void *, void *, size_t);
-    size_t (*sig_fun2) (void *, void *, size_t, double);
+    /* Fourth argument is the signal index of the first signal
+       value.  */
+    size_t (*sig_fun1) (void *, double *, size_t);
+    size_t (*sig_fun2) (void *, double *, size_t, double);
 
     /* Buffer for signal values.
 
@@ -214,7 +216,7 @@ struct rs_rainflow
 
        First argment is a user-supplied value.
        Second argument is the cycle.  */
-    void (*shift_fun) (void *, void const *);
+    void (*shift_fun) (void *, double const *);
 
     /* First argument of the SHIFT_FUN function.  */
     void *shift_arg;
@@ -1000,7 +1002,7 @@ rs_rainflow_set_signal_type (rs_rainflow_t *obj, int type)
 
 /* Customize the signal history access function.  */
 int
-rs_rainflow_set_read_signals (rs_rainflow_t *obj, size_t (*fun) (void *, void *, size_t), size_t incr)
+rs_rainflow_set_read_signals (rs_rainflow_t *obj, size_t (*fun) (void *, double *, size_t), size_t incr)
 {
   if (obj == NULL || (fun == NULL && incr > 0))
     {
@@ -1019,7 +1021,7 @@ rs_rainflow_set_read_signals (rs_rainflow_t *obj, size_t (*fun) (void *, void *,
 
    Default is to cache shifted cycles.  */
 int
-rs_rainflow_set_shift_cycle (rs_rainflow_t *obj, void (*fun) (void *, void const *), void *arg)
+rs_rainflow_set_shift_cycle (rs_rainflow_t *obj, void (*fun) (void *, double const *), void *arg)
 {
   if (obj == NULL || (fun == NULL && arg != NULL))
     {
@@ -1066,6 +1068,13 @@ rs_rainflow_set_signal_index (rs_rainflow_t *obj, double index)
   if (obj == NULL)
     {
       errno = EINVAL;
+      return -1;
+    }
+
+  /* TODO: Check for loss of precision.  */
+  if (fmod (index, 1.0) != 0.0)
+    {
+      errno = EDOM;
       return -1;
     }
 

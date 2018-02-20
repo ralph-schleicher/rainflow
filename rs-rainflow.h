@@ -112,17 +112,17 @@ extern int rs_rainflow_shift (rs_rainflow_t *__obj, void *__buffer, size_t __cou
 extern int rs_rainflow_finish (rs_rainflow_t *__obj);
 extern void *rs_rainflow_capture (rs_rainflow_t *__obj);
 
+extern int rs_rainflow_clear (rs_rainflow_t *__obj);
+
 /* Customization.  */
 extern int rs_rainflow_set_length (rs_rainflow_t *__obj, size_t __len, size_t __add);
 extern int rs_rainflow_set_signal_type (rs_rainflow_t *__obj, int __type);
-extern int rs_rainflow_set_read_signals (rs_rainflow_t *__obj, size_t (*__fun) (void *, void *, size_t), size_t __incr);
-extern int rs_rainflow_set_shift_cycle (rs_rainflow_t *__obj, void (*__fun) (void *, void const *), void *__arg);
+extern int rs_rainflow_set_read_signals (rs_rainflow_t *__obj, size_t (*__fun) (void *, double *, size_t), size_t __incr);
+extern int rs_rainflow_set_shift_cycle (rs_rainflow_t *__obj, void (*__fun) (void *, double const *), void *__arg);
 extern int rs_rainflow_set_signal_label (rs_rainflow_t *__obj, int __label);
 extern int rs_rainflow_set_signal_index (rs_rainflow_t *__obj, double __index);
 extern int rs_rainflow_set_merge_cycles (rs_rainflow_t *__obj, int __merge);
 extern int rs_rainflow_set_cycle_style (rs_rainflow_t *__obj, int __style);
-
-extern int rs_rainflow_clear (rs_rainflow_t *__obj);
 
 /* Sorting and merging.  */
 extern int rs_rainflow_sort (rs_rainflow_t *__obj, int (*__compare) (void const *, void const *));
