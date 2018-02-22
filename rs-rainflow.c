@@ -214,7 +214,7 @@ struct rs_rainflow
 
     /* Function to be run when a cycle can be shifted.
 
-       First argment is a user-supplied value.
+       First argument is a user-supplied value.
        Second argument is the cycle.  */
     void (*shift_fun) (void *, double const *);
 
