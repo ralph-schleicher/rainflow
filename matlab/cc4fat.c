@@ -114,13 +114,13 @@ struct type
     size_t (*indmax) (void const *, size_t);
 
     /* Function to copy signal values without signal labels.  */
-    size_t (*copy) (void *, void *, size_t);
+    size_t (*copy) (void *, double *, size_t);
 
     /* Function to copy signal values with implicit signal labels.  */
-    size_t (*copy_implicit) (void *, void *, size_t);
+    size_t (*copy_implicit) (void *, double *, size_t);
 
     /* Function to copy signal values with explicit signal labels.  */
-    size_t (*copy_explicit[TYPES]) (void *, void *, size_t);
+    size_t (*copy_explicit[TYPES]) (void *, double *, size_t);
   };
 
 typedef struct type type_t;
