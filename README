@@ -14,6 +14,11 @@ rainflow cycle counting.  The implementation has several features:
 
    * Support for alternative memory managers.
 
+   * Support for amplitude/mean, range/mean, and from/to cycle
+     representations.  Signed amplitude and range are supported,
+     too, so that there is no loss of information compared to a
+     from/to cycle representation.
+
    * Cycles can be cached or shifted (consumed) according to your
      needs.
 
