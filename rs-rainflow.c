@@ -749,13 +749,30 @@ add_cycle (rs_rainflow_t *obj, double const *to, double const *from, int count)
   /* Check for repeating cycle.
 
      Cycles are equal if the signal amplitude and mean value are equal
-     and if the signal labels are equal.  */
+     and if the signal labels are equal and in the same order.  */
   if (obj->merge != 0
       && obj->cycle_len > 0
-      && obj->cycle[0] == cycle[0]
-      && obj->cycle[1] == cycle[1]
-      && (obj->label == 0
-	  || memcmp (obj->cycle + 3, label, 2 * sizeof (double)) == 0))
+      && (fmod (obj->cycle[2], 2.0) == 0.0 ?
+	  /* The previous cycle is a full cycle, that means the cycle
+	     representation and signal labels have to be equal and in
+	     the normal order.  */
+	  ((obj->cycle[0] == cycle[0] &&
+	    obj->cycle[1] == cycle[1])
+	   && (obj->label == 0
+	       || memcmp (obj->cycle + 3, label, 2 * sizeof (double)) == 0)) :
+	  /* The previous cycle is a half cycle, that means the cycle
+	     representation and signal labels have to be equal but in
+	     the reverse order.  */
+	  ((obj->style == RS_RAINFLOW_FROM_TO ?
+	    (obj->cycle[0] == cycle[1] &&
+	     obj->cycle[1] == cycle[0]) :
+	    (obj->cycle[1] == cycle[1] /* mean value */
+	     && (obj->sign == 0 ?      /* amplitude */
+		 obj->cycle[0] == cycle[0] :
+		 obj->cycle[0] == - cycle[0])))
+	   && (obj->label == 0
+	       || (memcmp (obj->cycle + 3, label + 1, sizeof (double)) == 0 &&
+		   memcmp (obj->cycle + 4, label + 0, sizeof (double)) == 0)))))
     {
       /* Yes, increment cycle count.  */
       obj->cycle[2] += count;
