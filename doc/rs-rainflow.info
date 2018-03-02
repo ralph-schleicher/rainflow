@@ -208,33 +208,29 @@ follows.
    * The signal history is expected to be an array of double precision
      floating-point numbers whose elements can be accessed sequentially.
 
-     See function *note 'rs_rainflow_set_signal_type':
-     rs_rainflow_set_signal_type. for how to change the array element
-     type.  See function *note 'rs_rainflow_set_read_signals':
-     rs_rainflow_set_read_signals. for how to install a user-defined
-     signal history access function.
+     See function 'rs_rainflow_set_signal_type' for how to change the
+     array element type.  See function 'rs_rainflow_set_read_signals'
+     for how to install a user-defined signal history access function.
 
    * The cycle counting sequence is cached by the rainflow cycle
      counting object.
 
-     See function *note 'rs_rainflow_set_shift_cycle':
-     rs_rainflow_set_shift_cycle. for how to install a user-defined
-     function which will be called when a cycle can be added to the
-     cycle counting sequence.
+     See function 'rs_rainflow_set_shift_cycle' for how to install a
+     user-defined function which will be called when a cycle can be
+     added to the cycle counting sequence.
 
    * The length of the cycle counting sequence is derived from the
      number of elements in the signal history.
 
-     See function *note 'rs_rainflow_set_length':
-     rs_rainflow_set_length. for how to change the memory allocation
-     strategy for the cycle counting sequence.
+     See function 'rs_rainflow_set_length' for how to change the memory
+     allocation strategy for the cycle counting sequence.
 
    * Similar consecutive cycles are merged by adding the individual
      cycle counts.  This optimization reduces the length of the cycle
      counting sequence without loosing any information.
 
-     See function *note 'rs_rainflow_set_merge_cycles':
-     rs_rainflow_set_merge_cycles. for how to change this behavior.
+     See function 'rs_rainflow_set_merge_cycles' for how to change this
+     behavior.
 
 You have to call the 'rs_rainflow' function to perform rainflow cycle
 counting.  After that, you can call the 'rs_rainflow_cycles' function to
@@ -419,9 +415,9 @@ The individual functions are documented below.
 
      You can specify the predefined array element type
      'RS_RAINFLOW_TYPE_UNKNOWN' to clear any assumption about how signal
-     values are stored in the signal history.  See function *note
-     'rs_rainflow_set_read_signals': rs_rainflow_set_read_signals. for
-     how to install a user-defined signal history access function.
+     values are stored in the signal history.  See function
+     'rs_rainflow_set_read_signals' for how to install a user-defined
+     signal history access function.
 
      Return value is zero on success.  In case of an error, the return
      value is -1 and 'errno' is set to describe the error.  The
@@ -446,8 +442,7 @@ The individual functions are documented below.
           arguments.
 
              - First argument is a pointer to the signal history.  See
-               function *note 'rs_rainflow': rs_rainflow. for more
-               details.
+               function 'rs_rainflow' for more details.
 
              - Second argument is a pointer to a signal value buffer.
 
@@ -606,9 +601,8 @@ File: rs-rainflow.info,  Node: High-Level Procedures,  Next: Low-Level Procedure
      Sort the cached cycles.
 
      Since sorting destroys the order of the cycle counting sequence,
-     unconditionally merge similar cycles, too.  See function *note
-     'rs_rainflow_set_merge_cycles': rs_rainflow_set_merge_cycles. for
-     more details.
+     unconditionally merge similar cycles, too.  See function
+     'rs_rainflow_set_merge_cycles' for more details.
 
         * First argument OBJ is a pointer to a rainflow cycle counting
           object.
@@ -700,10 +694,10 @@ File: rs-rainflow.info,  Node: Array Element Types,  Next: Extended Error Codes,
  -- Constant: int RS_RAINFLOW_TYPE_UINT32_T
  -- Constant: int RS_RAINFLOW_TYPE_INT64_T
  -- Constant: int RS_RAINFLOW_TYPE_UINT64_T
-     The predefined array element types.  See function *note
-     'rs_rainflow_set_signal_type': rs_rainflow_set_signal_type.  The
-     array element type 'RS_RAINFLOW_TYPE_CHAR' specifies a signed
-     character, that is 'signed char' in C.
+     The predefined array element types.  See function
+     'rs_rainflow_set_signal_type'.  The array element type
+     'RS_RAINFLOW_TYPE_CHAR' specifies a signed character, that is
+     'signed char' in C.
 
 
 File: rs-rainflow.info,  Node: Extended Error Codes,  Prev: Array Element Types,  Up: Enumerated Constants
@@ -931,32 +925,32 @@ Symbol Index
  [index ]
 * Menu:
 
-* rs_rainflow:                           Execution.           (line  56)
+* rs_rainflow:                           Execution.           (line  53)
 * rs_rainflow_alloc:                     Instantiation.       (line  39)
-* rs_rainflow_capture:                   Execution.           (line 174)
+* rs_rainflow_capture:                   Execution.           (line 171)
 * rs_rainflow_compare_ascending:         Comparison Functions.
                                                               (line  17)
 * rs_rainflow_compare_descending:        Comparison Functions.
                                                               (line   6)
-* RS_RAINFLOW_CONTINUE:                  Execution.           (line  71)
-* rs_rainflow_cycles:                    Execution.           (line 102)
+* RS_RAINFLOW_CONTINUE:                  Execution.           (line  68)
+* rs_rainflow_cycles:                    Execution.           (line  99)
 * rs_rainflow_delete:                    Instantiation.       (line  22)
 * RS_RAINFLOW_ERROR_CYCLE_OVERFLOW:      Extended Error Codes.
                                                               (line   9)
 * RS_RAINFLOW_ERROR_STACK_OVERFLOW:      Extended Error Codes.
                                                               (line   6)
-* RS_RAINFLOW_FINISH:                    Execution.           (line  71)
-* rs_rainflow_finish:                    Execution.           (line 144)
+* RS_RAINFLOW_FINISH:                    Execution.           (line  68)
+* rs_rainflow_finish:                    Execution.           (line 141)
 * rs_rainflow_merge_cycles:              Low-Level Procedures.
                                                               (line   9)
 * rs_rainflow_new:                       Instantiation.       (line  15)
 * rs_rainflow_reset:                     Instantiation.       (line  81)
-* rs_rainflow_set_length:                Customization.       (line 142)
-* rs_rainflow_set_merge_cycles:          Customization.       (line 170)
-* rs_rainflow_set_read_signals:          Customization.       (line  52)
-* rs_rainflow_set_shift_cycle:           Customization.       (line 102)
+* rs_rainflow_set_length:                Customization.       (line 143)
+* rs_rainflow_set_merge_cycles:          Customization.       (line 171)
+* rs_rainflow_set_read_signals:          Customization.       (line  53)
+* rs_rainflow_set_shift_cycle:           Customization.       (line 103)
 * rs_rainflow_set_signal_type:           Customization.       (line  16)
-* rs_rainflow_shift:                     Execution.           (line 115)
+* rs_rainflow_shift:                     Execution.           (line 112)
 * rs_rainflow_sort:                      High-Level Procedures.
                                                               (line   6)
 * rs_rainflow_sort_cycles:               Low-Level Procedures.
@@ -994,26 +988,26 @@ Concept Index
 * allocation, memory:                    Instantiation.       (line  39)
 * alternative memory manager:            Instantiation.       (line  39)
 * amplitude, signal:                     Introduction.        (line   6)
-* capture cycle counting sequence:       Execution.           (line 174)
+* capture cycle counting sequence:       Execution.           (line 171)
 * constructor:                           Instantiation.       (line  15)
 * context:                               Instantiation.       (line   9)
 * creating an object:                    Instantiation.       (line  15)
 * cycle count:                           Introduction.        (line   6)
-* cycle counting sequence, capture:      Execution.           (line 174)
-* cycle counting sequence, length:       Execution.           (line 102)
-* cycle counting, finish:                Execution.           (line 144)
-* cycle counting, rainflow:              Execution.           (line  56)
+* cycle counting sequence, capture:      Execution.           (line 171)
+* cycle counting sequence, length:       Execution.           (line  99)
+* cycle counting, finish:                Execution.           (line 141)
+* cycle counting, rainflow:              Execution.           (line  53)
 * cycle counting, reservoir:             Reservoir Cycle Counting.
                                                               (line   6)
 * cycle, mean value:                     Introduction.        (line   6)
-* cycle, shift:                          Execution.           (line 115)
+* cycle, shift:                          Execution.           (line 112)
 * data type:                             Instantiation.       (line   9)
 * deleting an object:                    Instantiation.       (line  22)
 * destroying an object:                  Instantiation.       (line  22)
 * destructor:                            Instantiation.       (line  22)
-* finish cycle counting:                 Execution.           (line 144)
+* finish cycle counting:                 Execution.           (line 141)
 * instantiating an object:               Instantiation.       (line  15)
-* length of cycle counting sequence:     Execution.           (line 102)
+* length of cycle counting sequence:     Execution.           (line  99)
 * mean signal value:                     Introduction.        (line   6)
 * memory allocation:                     Instantiation.       (line  39)
 * memory manager, alternative:           Instantiation.       (line  39)
@@ -1022,16 +1016,16 @@ Concept Index
 * object deletion:                       Instantiation.       (line  22)
 * object reuse:                          Instantiation.       (line  81)
 * peak signal value:                     Introduction.        (line   6)
-* rainflow cycle counting:               Execution.           (line  56)
+* rainflow cycle counting:               Execution.           (line  53)
 * reservoir cycle counting:              Reservoir Cycle Counting.
                                                               (line   6)
 * reusing an object:                     Instantiation.       (line  81)
-* shift cycle:                           Execution.           (line 115)
+* shift cycle:                           Execution.           (line 112)
 * signal amplitude:                      Introduction.        (line   6)
 * signal value, peak:                    Introduction.        (line   6)
 * signal value, trough:                  Introduction.        (line   6)
 * state:                                 Instantiation.       (line   9)
-* terminate cycle counting:              Execution.           (line 144)
+* terminate cycle counting:              Execution.           (line 141)
 * trough signal value:                   Introduction.        (line   6)
 
 
@@ -1058,40 +1052,40 @@ Ref: rs_rainflow_delete3840
 Ref: rs_rainflow_alloc4588
 Ref: rs_rainflow_reset6571
 Node: Execution7248
-Ref: rs_rainflow9451
-Ref: RS_RAINFLOW_CONTINUE10003
-Ref: RS_RAINFLOW_FINISH10003
-Ref: rs_rainflow_cycles11097
-Ref: rs_rainflow_shift11582
-Ref: rs_rainflow_finish12621
-Ref: rs_rainflow_capture13670
-Node: Customization14610
-Ref: rs_rainflow_set_signal_type15091
-Ref: rs_rainflow_set_read_signals16481
-Ref: rs_rainflow_set_shift_cycle18472
-Ref: rs_rainflow_set_length19787
-Ref: rs_rainflow_set_merge_cycles20784
-Node: Sorting and Merging21684
-Node: High-Level Procedures22228
-Ref: rs_rainflow_sort22424
-Node: Low-Level Procedures23340
-Ref: rs_rainflow_sort_cycles23535
-Ref: rs_rainflow_merge_cycles23662
-Node: Comparison Functions23791
-Ref: rs_rainflow_compare_descending23956
-Ref: rs_rainflow_compare_ascending24362
-Node: Enumerated Constants24766
-Node: Array Element Types24979
-Node: Extended Error Codes26210
-Ref: RS_RAINFLOW_ERROR_STACK_OVERFLOW26375
-Ref: RS_RAINFLOW_ERROR_CYCLE_OVERFLOW26470
-Node: Examples26578
-Node: Basic Example26902
-Node: Using Call-back Functions28103
-Node: Reservoir Cycle Counting29325
-Node: Auxiliary Procedures30671
-Node: Symbol Index32015
-Node: Concept Index35741
-Node: References38944
+Ref: rs_rainflow9254
+Ref: RS_RAINFLOW_CONTINUE9806
+Ref: RS_RAINFLOW_FINISH9806
+Ref: rs_rainflow_cycles10900
+Ref: rs_rainflow_shift11385
+Ref: rs_rainflow_finish12424
+Ref: rs_rainflow_capture13473
+Node: Customization14413
+Ref: rs_rainflow_set_signal_type14894
+Ref: rs_rainflow_set_read_signals16247
+Ref: rs_rainflow_set_shift_cycle18203
+Ref: rs_rainflow_set_length19518
+Ref: rs_rainflow_set_merge_cycles20515
+Node: Sorting and Merging21415
+Node: High-Level Procedures21959
+Ref: rs_rainflow_sort22155
+Node: Low-Level Procedures23029
+Ref: rs_rainflow_sort_cycles23224
+Ref: rs_rainflow_merge_cycles23351
+Node: Comparison Functions23480
+Ref: rs_rainflow_compare_descending23645
+Ref: rs_rainflow_compare_ascending24051
+Node: Enumerated Constants24455
+Node: Array Element Types24668
+Node: Extended Error Codes25864
+Ref: RS_RAINFLOW_ERROR_STACK_OVERFLOW26029
+Ref: RS_RAINFLOW_ERROR_CYCLE_OVERFLOW26124
+Node: Examples26232
+Node: Basic Example26556
+Node: Using Call-back Functions27757
+Node: Reservoir Cycle Counting28979
+Node: Auxiliary Procedures30325
+Node: Symbol Index31669
+Node: Concept Index35395
+Node: References38598
 
 End Tag Table

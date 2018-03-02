@@ -29,9 +29,16 @@
 @end macro
 
 @c Symbol name reference.
+@iftex
 @macro syref{NAME}
-@ref{\NAME\, , @symb{\NAME\}}
+@ref{\NAME\,,@symb{\NAME\},,!!plain!!}
 @end macro
+@end iftex
+@ifnottex
+@macro syref{NAME}
+@symb{\NAME\}
+@end macro
+@end ifnottex
 @c %**end of header
 
 @copying
@@ -234,7 +241,7 @@ itself.  After that, all references to the rainflow cycle counting
 object are void.
 @end deftypefun
 
-The @symb{rs_rainflow_new} function utilizes the standard memory
+The @syref{rs_rainflow_new} function utilizes the standard memory
 management functions of the C library, i.e. @symb{malloc},
 @symb{realloc}, and @symb{free}.  There is another rainflow cycle
 counting object creation function where you can specify alternative
@@ -284,9 +291,9 @@ Argument @var{malloc} or @var{realloc} is a null pointer.
 @end table
 @end deftypefun
 
-You usually call @symb{rs_rainflow_delete} when you are done with a
-rainflow cycle counting object.  Then you call @symb{rs_rainflow_new} or
-@symb{rs_rainflow_alloc} if you need another rainflow cycle counting
+You usually call @syref{rs_rainflow_delete} when you are done with a
+rainflow cycle counting object.  Then you call @syref{rs_rainflow_new} or
+@syref{rs_rainflow_alloc} if you need another rainflow cycle counting
 object.  The following convenience function has the same effect except
 that the reference to the rainflow cycle counting object remains the
 same.
@@ -303,8 +310,8 @@ Reset a rainflow cycle counting object.
 Argument @var{obj} is a pointer to a rainflow cycle counting object.
 @end itemize
 
-The effect of this function is like calling @symb{rs_rainflow_delete}
-followed by a call to @symb{rs_rainflow_new} except that the rainflow
+The effect of this function is like calling @syref{rs_rainflow_delete}
+followed by a call to @syref{rs_rainflow_new} except that the rainflow
 cycle counting object itself and the associated memory management
 functions remain the same.
 
@@ -322,10 +329,10 @@ Argument @var{obj} is a null pointer.
 @node Execution, Customization, Instantiation, API Reference
 @section Execution
 
-The @symb{rs_rainflow} function is the core procedure for counting
+The @syref{rs_rainflow} function is the core procedure for counting
 cycles.  The result of the rainflow cycle counting method is a cycle
 counting sequence.  The state of a rainflow cycle counting object
-controls the behavior of the @symb{rs_rainflow} function.  The
+controls the behavior of the @syref{rs_rainflow} function.  The
 default behavior is as follows.
 
 @itemize
@@ -361,13 +368,13 @@ See function @syref{rs_rainflow_set_merge_cycles} for how to change this
 behavior.
 @end itemize
 
-You have to call the @symb{rs_rainflow} function to perform rainflow
-cycle counting.  After that, you can call the @symb{rs_rainflow_cycles}
+You have to call the @syref{rs_rainflow} function to perform rainflow
+cycle counting.  After that, you can call the @syref{rs_rainflow_cycles}
 function to determine the current length of the cycle counting sequence.
-Then you can shift (consume) cycles by calling the @symb{rs_rainflow_shift}
+Then you can shift (consume) cycles by calling the @syref{rs_rainflow_shift}
 
 function.  After all signal values have been feed to the
-@symb{rs_rainflow} function, call the @symb{rs_rainflow_finish} function
+@syref{rs_rainflow} function, call the @syref{rs_rainflow_finish} function
 to terminate cycle counting.
 
 @cindex rainflow cycle counting
@@ -496,7 +503,7 @@ There are not enough cycles available.
 @end table
 @end deftypefun
 
-Rainflow cycle counting ends when the @symb{rs_rainflow} function is
+Rainflow cycle counting ends when the @syref{rs_rainflow} function is
 called with a non-zero fourth argument.  There is a convenience function
 which does this explicitly:
 
@@ -544,7 +551,7 @@ Calling this function is equal to
 @end deftypefun
 
 When rainflow cycle counting is finished, you can still call the
-@symb{rs_rainflow_cycles} and @symb{rs_rainflow_shift} functions to
+@syref{rs_rainflow_cycles} and @syref{rs_rainflow_shift} functions to
 consume the remaining cycles.  But there is an alternative method to
 access the cycle counting sequence:
 
@@ -564,7 +571,7 @@ Return value is a pointer to the cycle counting sequence, i.e. a block
 of memory.  The memory block is allocated with the configured memory
 allocation function and the caller is responsible for freeing the memory
 block with the appropriate procedure.  When this function succeeds, any
-call to the @symb{rs_rainflow_cycles} function will return zero.  Thus,
+call to the @syref{rs_rainflow_cycles} function will return zero.  Thus,
 you have to determine the number of cycles @emph{before} calling
 @symb{rs_rainflow_capture}.
 
@@ -623,7 +630,7 @@ an array with elements of the specified type and that the array elements
 can be accessed sequentially.
 
 You can specify the predefined array element type
-@symb{RS_RAINFLOW_TYPE_UNKNOWN} to clear any assumption about
+@syref{RS_RAINFLOW_TYPE_UNKNOWN} to clear any assumption about
 how signal values are stored in the signal history.  See function
 @syref{rs_rainflow_set_read_signals} for how to install a user-defined
 signal history access function.
@@ -689,7 +696,7 @@ copied.
 When you call this function, you are responsible for converting signal
 values from the signal history to double precision floating-point
 numbers.  This function replaces the built-in signal history access
-function installed by the @symb{rs_rainflow_set_signal_type} function.
+function installed by the @syref{rs_rainflow_set_signal_type} function.
 
 Return value is zero on success.  In case of an error, the return value
 is -1 and @symb{errno} is set to describe the error.  The following
@@ -873,7 +880,7 @@ object.
 
 @item
 Second argument @var{compare} is a comparison function.  Default is
-@symb{rs_rainflow_compare_descending}.  @xref{Comparison Functions},
+@syref{rs_rainflow_compare_descending}.  @xref{Comparison Functions},
 for more predefined comparison functions.
 @end itemize
 

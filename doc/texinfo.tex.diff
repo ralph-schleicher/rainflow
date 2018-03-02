@@ -1,11 +1,11 @@
 --- texinfo.tex.orig	2018-02-17 15:15:35.681113789 +0100
-+++ texinfo.tex	2018-02-17 15:21:38.476496638 +0100
++++ texinfo.tex	2018-03-01 18:14:47.288776011 +0100
 @@ -3,7 +3,7 @@
  % Load plain if necessary, i.e., if running under initex.
  \expandafter\ifx\csname fmtname\endcsname\relax\input plain\fi
  %
 -\def\texinfoversion{2017-06-04.19}
-+\def\texinfoversion{2018-02-17.15}
++\def\texinfoversion{2018-03-01.18}
  %
  % Copyright 1985, 1986, 1988, 1990, 1991, 1992, 1993, 1994, 1995,
  % 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
@@ -18,3 +18,34 @@
        \ifrettypeownline
          % put return type on its own line; prohibit line break following:
          \hfil\vadjust{\nobreak}\break  
+@@ -8823,6 +8823,8 @@
+ \newbox\infofilenamebox
+ \newbox\printedmanualbox
+ %
++\def\plainrefmagic{\ignorespaces !!plain!!}
++%
+ \def\xrefX[#1,#2,#3,#4,#5,#6]{\begingroup
+   \unsepspaces
+   %
+@@ -8956,6 +8958,12 @@
+     \ifdim \wd\printedmanualbox > 0pt
+       \space \putwordin{} \cite{\printedmanual}%
+     \fi
++  \else\ifx\printedmanual\plainrefmagic
++   \ifdim\wd\printedrefnamebox = 0pt
++      \refx{#1-snt}{}%
++    \else
++      \printedrefname
++    \fi
+   \else
+     % node/anchor (non-float) references.
+     % 
+@@ -9010,7 +9018,7 @@
+       \else\ifx\tie\tokenafterxref ,% @tie
+       \fi\fi\fi\fi\fi\fi
+     \fi\fi
+-  \fi
++  \fi\fi
+   \endlink
+ \endgroup}
+ 
