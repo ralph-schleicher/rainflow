@@ -182,3 +182,43 @@ print_cycles_fast (FILE *stream, rs_rainflow_t *obj)
 	}
     }
 }
+
+/* The signal history.  */
+struct sig1 sig1[] =
+  {
+    { 9, "A"},
+    {-4, "B"},
+    { 6, "C"},
+    {-9, "D"},
+    {-1, "E"},
+    {-7, "F"},
+    { 4, "G"},
+    { 0, "H"},
+    { 4, "G"},
+    { 0, "H"},
+    { 9, "A"},
+  };
+
+size_t sig1_len = sizeof (sig1) / sizeof (sig1[0]);
+
+void
+sig1_print1 (FILE *stream, double const *cycle)
+{
+  /* Print cycle count as the number of full cycles.  */
+  fprintf (stream, "%.5G;%.5G;%.5G\n",
+	   cycle[0], cycle[1], cycle[2] / 2.0);
+}
+
+void
+sig1_print2 (FILE *stream, double const *cycle)
+{
+  char *from, *to;
+
+  /* Convert signal labels.  */
+  memcpy (&from, cycle + 3, sizeof (char *));
+  memcpy (&to, cycle + 4, sizeof (char *));
+
+  /* Print cycle count as the number of full cycles.  */
+  fprintf (stream, "%.5G;%.5G;%.5G;%s;%s\n",
+	   cycle[0], cycle[1], cycle[2] / 2.0, from, to);
+}

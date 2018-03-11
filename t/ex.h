@@ -48,6 +48,24 @@ extern void print_cycle (FILE *__stream, double const *__cycle);
 extern void print_cycles (FILE *__stream, rs_rainflow_t *__obj);
 extern void print_cycles_fast (FILE *__stream, rs_rainflow_t *__obj);
 
+/* Element of a signal history.  */
+struct sig1
+  {
+    /* Signal value.  */
+    float value;
+
+    /* Signal label.  */
+    char *label;
+  };
+
+/* The signal history.  */
+extern struct sig1 sig1[];
+extern size_t sig1_len;
+
+/* Print a cycle without and with signal labels.  */
+extern void sig1_print1 (FILE *__stream, double const *__cycle);
+extern void sig1_print2 (FILE *__stream, double const *__cycle);
+
 RS_RAINFLOW_END_DECL
 
 #endif /* not EX_H */
