@@ -1566,42 +1566,6 @@ rs_rainflow_capture (rs_rainflow_t *obj)
   return cycle;
 }
 
-/* Sort cycle counting sequence.  */
-int
-rs_rainflow_sort (rs_rainflow_t *obj, int (*compare) (void const *, void const *))
-{
-  double *cycle;
-  size_t cycles;
-
-  if (obj == NULL || compare == NULL)
-    {
-      errno = EINVAL;
-      return -1;
-    }
-
-  if (obj->busy == UPDATE)
-    {
-      errno = EBUSY;
-      return -1;
-    }
-
-  cycle = obj->cycle_base + obj->cycle_offs * obj->cycle_elem;
-  cycles = obj->cycle_len;
-
-  if (cycles > 1)
-    {
-      qsort (cycle, cycles, obj->cycle_size, compare);
-
-      /* Unconditionally merge similar cycles.  */
-      merge_cycles (cycle, &cycles, obj->cycle_size, compare);
-
-      obj->cycle_len = cycles;
-      relocate_cycle (obj);
-    }
-
-  return 0;
-}
-
 /* Low-level sorting procedure.  */
 int
 rs_rainflow_sort_cycles (void *buffer, size_t count, size_t size, int (*compare) (void const *, void const *))
@@ -1669,6 +1633,42 @@ rs_rainflow_merge_cycles (void *buffer, size_t *count, size_t size, int (*compar
     }
 
   return merge_cycles (buffer, count, size, compare);
+}
+
+/* Sort cycle counting sequence.  */
+int
+rs_rainflow_sort (rs_rainflow_t *obj, int (*compare) (void const *, void const *))
+{
+  double *cycle;
+  size_t cycles;
+
+  if (obj == NULL || compare == NULL)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  if (obj->busy == UPDATE)
+    {
+      errno = EBUSY;
+      return -1;
+    }
+
+  cycle = obj->cycle_base + obj->cycle_offs * obj->cycle_elem;
+  cycles = obj->cycle_len;
+
+  if (cycles > 1)
+    {
+      qsort (cycle, cycles, obj->cycle_size, compare);
+
+      /* Unconditionally merge similar cycles.  */
+      merge_cycles (cycle, &cycles, obj->cycle_size, compare);
+
+      obj->cycle_len = cycles;
+      relocate_cycle (obj);
+    }
+
+  return 0;
 }
 
 /*
