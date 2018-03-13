@@ -1572,9 +1572,8 @@ rs_rainflow_sort (rs_rainflow_t *obj, int (*compare) (void const *, void const *
 {
   double *cycle;
   size_t cycles;
-  int retval;
 
-  if (obj == NULL)
+  if (obj == NULL || compare == NULL)
     {
       errno = EINVAL;
       return -1;
@@ -1591,14 +1590,10 @@ rs_rainflow_sort (rs_rainflow_t *obj, int (*compare) (void const *, void const *
 
   if (cycles > 1)
     {
-      retval = rs_rainflow_sort_cycles (cycle, cycles, obj->cycle_size, compare);
-      if (retval != 0)
-	return retval;
+      qsort (cycle, cycles, obj->cycle_size, compare);
 
       /* Unconditionally merge similar cycles.  */
-      retval = rs_rainflow_merge_cycles (cycle, &cycles, obj->cycle_size, compare);
-      if (retval != 0)
-	return retval;
+      merge_cycles (cycle, &cycles, obj->cycle_size, compare);
 
       obj->cycle_len = cycles;
       relocate_cycle (obj);
@@ -1607,100 +1602,34 @@ rs_rainflow_sort (rs_rainflow_t *obj, int (*compare) (void const *, void const *
   return 0;
 }
 
-/* Compare the number A against B.  If A is considered greater than B,
-   the return value is a positive number.  If A is considered less than
-   B, the return value is a negative number.  If the two numbers are
-   equal, the return value is zero.  */
-static_inline int
-fcmp (double a, double b)
-{
-  return (a > b) - (a < b);
-}
-
-/* Comparison function for sorting cycles by signal amplitude and mean
-   value in ascending order.  */
-static_inline int
-compare_cycles (double const *a, double const *b)
-{
-  int diff;
-
-  diff = fcmp (a[0], b[0]);
-  if (diff != 0)
-    return diff;
-
-  return fcmp (a[1], b[1]);
-}
-
-/* Comparison function for sorting cycles by signal labels in ascending
-   order.  */
-static_inline int
-compare_labels (double const *a, double const *b)
-{
-  int diff;
-
-  diff = memcmp (a + 3, b + 3, sizeof (double));
-  if (diff != 0)
-    return diff;
-
-  return memcmp (a + 4, b + 4, sizeof (double));
-}
-
-/* Comparison function for sorting cycles in ascending order.  */
-int
-rs_rainflow_compare_ascending (void const *left, void const *right)
-{
-  return compare_cycles (left, right);
-}
-
-/* Comparison function for sorting cycles in descending order.  */
-int
-rs_rainflow_compare_descending (void const *left, void const *right)
-{
-  return compare_cycles (right, left);
-}
-
 /* Low-level sorting procedure.  */
 int
 rs_rainflow_sort_cycles (void *buffer, size_t count, size_t size, int (*compare) (void const *, void const *))
 {
-  if (buffer == NULL)
+  if (buffer == NULL || compare == NULL)
     {
       errno = EINVAL;
       return -1;
     }
 
   if (count > 1)
-    {
-      if (compare == NULL)
-	compare = rs_rainflow_compare_descending;
-
-      qsort (buffer, count, size, compare);
-    }
+    qsort (buffer, count, size, compare);
 
   return 0;
 }
 
 /* Low-level merging procedure.  */
-int
-rs_rainflow_merge_cycles (void *buffer, size_t *count, size_t size, int (*compare) (void const *, void const *))
+static int
+merge_cycles (void *buffer, size_t *count, size_t size, int (*compare) (void const *, void const *))
 {
   double *head, *tail;
   size_t c, n, elem;
-
-  if (buffer == NULL || count == NULL || (size % sizeof (double)) != 0)
-    {
-      errno = EINVAL;
-      return -1;
-    }
 
   elem = size / sizeof (double);
 
   c = *count;
   if (c > 1)
     {
-      if (compare == NULL)
-	compare = rs_rainflow_compare_descending;
-
       head = buffer;
 
       for (n = c - 1; n > 0; --n)
@@ -1728,6 +1657,18 @@ rs_rainflow_merge_cycles (void *buffer, size_t *count, size_t size, int (*compar
     }
 
   return 0;
+}
+
+int
+rs_rainflow_merge_cycles (void *buffer, size_t *count, size_t size, int (*compare) (void const *, void const *))
+{
+  if (buffer == NULL || count == NULL || (size % sizeof (double)) != 0 || compare == NULL)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  return merge_cycles (buffer, count, size, compare);
 }
 
 /*
