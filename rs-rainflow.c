@@ -1480,7 +1480,7 @@ rs_rainflow_cycles (rs_rainflow_t *obj)
 
 /* Fetch the oldest cycles from the rainflow cycle counting sequence.  */
 int
-rs_rainflow_shift (rs_rainflow_t *obj, void *buffer, size_t count)
+rs_rainflow_shift (rs_rainflow_t *obj, double *buffer, size_t count)
 {
   double *cycle;
 
@@ -1512,7 +1512,7 @@ rs_rainflow_shift (rs_rainflow_t *obj, void *buffer, size_t count)
 }
 
 /* Return the cycle counting sequence.  */
-void *
+double *
 rs_rainflow_capture (rs_rainflow_t *obj)
 {
   double *cycle;
@@ -1568,7 +1568,7 @@ rs_rainflow_capture (rs_rainflow_t *obj)
 
 /* Low-level sorting procedure.  */
 int
-rs_rainflow_sort_cycles (void *buffer, size_t count, size_t size, int (*compare) (void const *, void const *))
+rs_rainflow_sort_cycles (double *buffer, size_t count, size_t size, int (*compare) (void const *, void const *))
 {
   if (buffer == NULL || compare == NULL)
     {
@@ -1584,7 +1584,7 @@ rs_rainflow_sort_cycles (void *buffer, size_t count, size_t size, int (*compare)
 
 /* Low-level merging procedure.  */
 static int
-merge_cycles (void *buffer, size_t *count, size_t size, int (*compare) (void const *, void const *))
+merge_cycles (double *buffer, size_t *count, size_t size, int (*compare) (void const *, void const *))
 {
   double *head, *tail;
   size_t c, n, elem;
@@ -1624,7 +1624,7 @@ merge_cycles (void *buffer, size_t *count, size_t size, int (*compare) (void con
 }
 
 int
-rs_rainflow_merge_cycles (void *buffer, size_t *count, size_t size, int (*compare) (void const *, void const *))
+rs_rainflow_merge_cycles (double *buffer, size_t *count, size_t size, int (*compare) (void const *, void const *))
 {
   if (buffer == NULL || count == NULL || (size % sizeof (double)) != 0 || compare == NULL)
     {
@@ -1669,6 +1669,44 @@ rs_rainflow_sort (rs_rainflow_t *obj, int (*compare) (void const *, void const *
     }
 
   return 0;
+}
+
+/* Compare the number A against B.  If A is considered greater than B,
+   the return value is a positive number.  If A is considered less than
+   B, the return value is a negative number.  If the two numbers are
+   equal, the return value is zero.  */
+static_inline int
+fcmp (double a, double b)
+{
+  return (a > b) - (a < b);
+}
+
+/* Comparison function for sorting amplitude/mean or range/mean cycles
+   in ascending order.  */
+static_inline int
+compare_cycles (double const *a, double const *b)
+{
+  int diff;
+
+  diff = fcmp (a[0], b[0]);
+  if (diff != 0)
+    return diff;
+
+  return fcmp (a[1], b[1]);
+}
+
+/* Comparison function for sorting cycles in ascending order.  */
+int
+rs_rainflow_compare_ascending (void const *left, void const *right)
+{
+  return compare_cycles (left, right);
+}
+
+/* Comparison function for sorting cycles in descending order.  */
+int
+rs_rainflow_compare_descending (void const *left, void const *right)
+{
+  return compare_cycles (right, left);
 }
 
 /*
