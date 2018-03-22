@@ -123,7 +123,7 @@ host_triplet = @host@
 noinst_PROGRAMS = ex-basic$(EXEEXT) ex-rainflow$(EXEEXT) \
 	ex-reservoir$(EXEEXT) ex-infinite$(EXEEXT) ex-read1$(EXEEXT) \
 	ex-read1-short$(EXEEXT) ex-read2$(EXEEXT) \
-	ex-read2-short$(EXEEXT)
+	ex-read2-short$(EXEEXT) ex-rainflow-matrix$(EXEEXT)
 check_PROGRAMS = $(am__EXEEXT_1)
 subdir = t
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -146,7 +146,7 @@ am__v_lt_1 =
 am__EXEEXT_1 = ex-basic$(EXEEXT) ex-rainflow$(EXEEXT) \
 	ex-reservoir$(EXEEXT) ex-infinite$(EXEEXT) ex-read1$(EXEEXT) \
 	ex-read1-short$(EXEEXT) ex-read2$(EXEEXT) \
-	ex-read2-short$(EXEEXT)
+	ex-read2-short$(EXEEXT) ex-rainflow-matrix$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
 ex_basic_SOURCES = ex-basic.c
 ex_basic_OBJECTS = ex-basic.$(OBJEXT)
@@ -160,6 +160,10 @@ ex_rainflow_SOURCES = ex-rainflow.c
 ex_rainflow_OBJECTS = ex-rainflow.$(OBJEXT)
 ex_rainflow_LDADD = $(LDADD)
 ex_rainflow_DEPENDENCIES = libex.la
+ex_rainflow_matrix_SOURCES = ex-rainflow-matrix.c
+ex_rainflow_matrix_OBJECTS = ex-rainflow-matrix.$(OBJEXT)
+ex_rainflow_matrix_LDADD = $(LDADD)
+ex_rainflow_matrix_DEPENDENCIES = libex.la
 ex_read1_SOURCES = ex-read1.c
 ex_read1_OBJECTS = ex-read1.$(OBJEXT)
 ex_read1_LDADD = $(LDADD)
@@ -214,11 +218,11 @@ am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libex_la_SOURCES) ex-basic.c ex-infinite.c ex-rainflow.c \
-	ex-read1.c ex-read1-short.c ex-read2.c ex-read2-short.c \
-	ex-reservoir.c
-DIST_SOURCES = $(libex_la_SOURCES) ex-basic.c ex-infinite.c \
-	ex-rainflow.c ex-read1.c ex-read1-short.c ex-read2.c \
+	ex-rainflow-matrix.c ex-read1.c ex-read1-short.c ex-read2.c \
 	ex-read2-short.c ex-reservoir.c
+DIST_SOURCES = $(libex_la_SOURCES) ex-basic.c ex-infinite.c \
+	ex-rainflow.c ex-rainflow-matrix.c ex-read1.c ex-read1-short.c \
+	ex-read2.c ex-read2-short.c ex-reservoir.c
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -651,6 +655,10 @@ ex-infinite$(EXEEXT): $(ex_infinite_OBJECTS) $(ex_infinite_DEPENDENCIES) $(EXTRA
 ex-rainflow$(EXEEXT): $(ex_rainflow_OBJECTS) $(ex_rainflow_DEPENDENCIES) $(EXTRA_ex_rainflow_DEPENDENCIES) 
 	@rm -f ex-rainflow$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(ex_rainflow_OBJECTS) $(ex_rainflow_LDADD) $(LIBS)
+
+ex-rainflow-matrix$(EXEEXT): $(ex_rainflow_matrix_OBJECTS) $(ex_rainflow_matrix_DEPENDENCIES) $(EXTRA_ex_rainflow_matrix_DEPENDENCIES) 
+	@rm -f ex-rainflow-matrix$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(ex_rainflow_matrix_OBJECTS) $(ex_rainflow_matrix_LDADD) $(LIBS)
 
 ex-read1$(EXEEXT): $(ex_read1_OBJECTS) $(ex_read1_DEPENDENCIES) $(EXTRA_ex_read1_DEPENDENCIES) 
 	@rm -f ex-read1$(EXEEXT)
