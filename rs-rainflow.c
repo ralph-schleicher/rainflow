@@ -1709,6 +1709,402 @@ rs_rainflow_compare_descending (void const *left, void const *right)
   return compare_cycles (right, left);
 }
 
+/* Rainflow matrix data structure.  */
+struct rs_rainflow_matrix
+  {
+    /* Sparse matrix.  */
+    double *sparse;
+
+    /* Allocated number of sparse matrix elements.  */
+    size_t sparse_count;
+
+    /* Number of sparse matrix elements.  */
+    size_t sparse_len;
+
+    /* Number of zero elements.  */
+    size_t sparse_zero;
+  };
+
+/* Size of a rainflow matrix element.  */
+#define RAINFLOW_MATRIX_SIZE (3 * sizeof (double))
+
+/* Number of rainflow matrix elements to be added iff the rainflow
+   matrix has to grow, 4096 / (3 * 8).  */
+#define RAINFLOW_MATRIX_ADD 170
+
+/* Maximum number of rainflow matrix elements.  */
+#define RAINFLOW_MATRIX_MAX (SIZE_MAX / RAINFLOW_MATRIX_SIZE)
+
+/* Comparison function for sorting rainflow matrix elements.  */
+static int
+compare_keys (double const *a, double const *b)
+{
+  int diff;
+
+  diff = fcmp (a[0], b[0]);
+  if (diff != 0)
+    return diff;
+
+  return fcmp (a[1], b[1]);
+}
+
+/* Create a rainflow matrix object.  */
+rs_rainflow_matrix_t *
+rs_rainflow_matrix_new (void)
+{
+  rs_rainflow_matrix_t *obj;
+
+  obj = calloc (1, sizeof (rs_rainflow_matrix_t));
+  if (obj != NULL)
+    {
+      obj->sparse = calloc (RAINFLOW_MATRIX_ADD, RAINFLOW_MATRIX_SIZE);
+      obj->sparse_count = RAINFLOW_MATRIX_ADD;
+      obj->sparse_len = 0;
+      obj->sparse_zero = 0;
+
+      if (obj->sparse == NULL)
+	{
+	  free (obj);
+	  obj = NULL;
+	}
+    }
+
+  return obj;
+}
+
+/* Destroy a rainflow matrix object.  */
+void
+rs_rainflow_matrix_delete (rs_rainflow_matrix_t *obj)
+{
+  if (obj == NULL)
+    return;
+
+  if (obj->sparse != NULL)
+    free (obj->sparse);
+
+  /* Release myself.  */
+  free (obj);
+}
+
+/* Add the cycle count of CYCLE to the rainflow matrix.
+
+   The cycle representation of CYCLE should be discretized according to
+   the desired bin edges of the rainflow matrix.  */
+static int
+matrix_add (rs_rainflow_matrix_t *obj, double const *cycle)
+{
+  double *entry;
+
+  if (obj == NULL || cycle == NULL)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  if (isnan (cycle[0]) || isnan (cycle[1]))
+    {
+      errno = EDOM;
+      return -1;
+    }
+
+  if (isnan (cycle[2]) || cycle[2] < 0.0)
+    {
+      errno = ERANGE;
+      return -1;
+    }
+
+  if (cycle[2] > 0.0)
+    {
+      entry = bsearch (cycle, obj->sparse, obj->sparse_len, RAINFLOW_MATRIX_SIZE, (void *) compare_keys);
+      if (entry != NULL)
+	{
+	  /* Add cycle count.  */
+	  entry[2] += cycle[2];
+	}
+      else
+	{
+	  size_t c;
+	  double *p;
+
+	  /* Check for room.  */
+	  if (obj->sparse_len == obj->sparse_count)
+	    {
+	      /* Enlarge buffer.  */
+	      if (obj->sparse_count == RAINFLOW_MATRIX_MAX)
+		{
+		  errno = ENOMEM;
+		  return -1;
+		}
+
+	      /* New length.  */
+	      c = (obj->sparse_count <= RAINFLOW_MATRIX_MAX - RAINFLOW_MATRIX_ADD ?
+		   obj->sparse_count + RAINFLOW_MATRIX_ADD :
+		   RAINFLOW_MATRIX_MAX);
+
+	      p = realloc (obj->sparse, c * RAINFLOW_MATRIX_SIZE);
+	      if (p == NULL)
+		return -1;
+
+	      obj->sparse = p;
+	      obj->sparse_count = c;
+	    }
+
+	  /* Insert matrix element.  */
+	  p = obj->sparse;
+	  c = obj->sparse_len;
+
+	  for (; c > 0; --c)
+	    {
+	      if (compare_keys (cycle, p) < 0)
+		break;
+
+	      p += 3;
+	    }
+
+	  memmove (p + 3, p, c * RAINFLOW_MATRIX_SIZE);
+	  memcpy (p, cycle, RAINFLOW_MATRIX_SIZE);
+
+	  ++obj->sparse_len;
+	}
+    }
+
+  return 0;
+}
+
+int
+rs_rainflow_matrix_add (rs_rainflow_matrix_t *obj, double const *cycle)
+{
+  return matrix_add (obj, cycle);
+}
+
+int
+rs_rainflow_matrix_add3 (rs_rainflow_matrix_t *obj, double first, double second, double count)
+{
+  double cycle[3];
+
+  cycle[0] = first;
+  cycle[1] = second;
+  cycle[2] = count;
+
+  return matrix_add (obj, cycle);
+}
+
+/* Get the cycle count of CYCLE.  */
+static double
+matrix_get (rs_rainflow_matrix_t *obj, double const *cycle)
+{
+  double *entry;
+
+  if (obj == NULL || cycle == NULL)
+    {
+      errno = EINVAL;
+      return NAN;
+    }
+
+  if (isnan (cycle[0]) || isnan (cycle[1]))
+    {
+      errno = EDOM;
+      return NAN;
+    }
+
+  entry = bsearch (cycle, obj->sparse, obj->sparse_len, RAINFLOW_MATRIX_SIZE, (void *) compare_keys);
+  if (entry != NULL)
+    return entry[2];
+
+  return 0.0;
+}
+
+double
+rs_rainflow_matrix_get (rs_rainflow_matrix_t *obj, double const *cycle)
+{
+  return matrix_get (obj, cycle);
+}
+
+double
+rs_rainflow_matrix_get2 (rs_rainflow_matrix_t *obj, double first, double second)
+{
+  double cycle[3];
+
+  cycle[0] = first;
+  cycle[1] = second;
+  cycle[2] = 0.0;
+
+  return matrix_get (obj, cycle);
+}
+
+/* Get the lower and upper bound of a rainflow matrix dimension.  */
+int
+rs_rainflow_matrix_limits (rs_rainflow_matrix_t *obj, int dim, double *_min, double *_max)
+{
+  if (obj == NULL || dim < 0 || dim > 1)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  if (obj->sparse_len == 0)
+    {
+      errno = ERANGE;
+      return -1;
+    }
+
+  if (_min != NULL)
+    *_min = obj->sparse[dim];
+
+  if (_max != NULL)
+    *_max = obj->sparse[dim + obj->sparse_len - 1];
+
+  return 0;
+}
+
+size_t
+rs_rainflow_matrix_non_zero (rs_rainflow_matrix_t *obj)
+{
+  if (obj == NULL)
+    {
+      errno = EINVAL;
+      return 0;
+    }
+
+  return obj->sparse_len - obj->sparse_zero;
+}
+
+void
+rs_rainflow_matrix_map (rs_rainflow_matrix_t *obj, void (*fun) (void *, double const *), void *arg)
+{
+  double *p;
+  size_t c;
+
+  if (obj == NULL || fun == NULL)
+    {
+      errno = EINVAL;
+      return;
+    }
+
+  p = obj->sparse;
+  c = obj->sparse_len;
+
+  for (; c > 0; --c, p += 3)
+    {
+      if (p[2] != 0.0)
+	fun (arg, p);
+    }
+}
+
+/* Round argument X to the multiple of the number SCALE.
+   The return value is undefined if SCALE is not a positive
+   number.  */
+static_inline double
+round_up (double x, double scale)
+{
+  return (scale == 1.0 ? ceil (x) : ceil (x / scale) * scale);
+}
+
+static_inline double
+round_down (double x, double scale)
+{
+  return (scale == 1.0 ? floor (x) : floor (x / scale) * scale);
+}
+
+static_inline double
+round_zero (double x, double scale)
+{
+  return (scale == 1.0 ? trunc (x) : trunc (x / scale) * scale);
+}
+
+double
+rs_rainflow_round_up (double x, double scale)
+{
+  return (x == 0.0 ? 0.0 : round_up (x, scale));
+}
+
+double
+rs_rainflow_round_down (double x, double scale)
+{
+  return (x == 0.0 ? 0.0 : round_down (x, scale));
+}
+
+double
+rs_rainflow_round_zero (double x, double scale)
+{
+  return (x == 0.0 ? 0.0 : round_zero (x, scale));
+}
+
+double
+rs_rainflow_round_inf (double x, double scale)
+{
+  return (x == 0.0 ? 0.0 : (x > 0.0 ? round_up (x, scale) : round_down (x, scale)));
+}
+
+void
+rs_rainflow_round_amplitude_mean (double *cycle, double scale)
+{
+  double a, b;
+
+  a = cycle[1] - cycle[0];
+  b = cycle[1] + cycle[0];
+
+  if (a < b)
+    {
+      a = round_down (a, scale);
+      b = round_up (b, scale);
+    }
+  else
+    {
+      a = round_up (a, scale);
+      b = round_down (b, scale);
+    }
+
+  cycle[0] = (b - a) / 2.0;
+  cycle[1] = (b + a) / 2.0;
+}
+
+void
+rs_rainflow_round_range_mean (double *cycle, double scale)
+{
+  double a, b;
+
+  a = cycle[1] - cycle[0] / 2.0;
+  b = cycle[1] + cycle[0] / 2.0;
+
+  if (a < b)
+    {
+      a = round_down (a, scale);
+      b = round_up (b, scale);
+    }
+  else
+    {
+      a = round_up (a, scale);
+      b = round_down (b, scale);
+    }
+
+  cycle[0] = (b - a);
+  cycle[1] = (b + a) / 2.0;
+}
+
+void
+rs_rainflow_round_from_to (double *cycle, double scale)
+{
+  double a, b;
+
+  a = cycle[0];
+  b = cycle[1];
+
+  if (a < b)
+    {
+      a = round_down (a, scale);
+      b = round_up (b, scale);
+    }
+  else
+    {
+      a = round_up (a, scale);
+      b = round_down (b, scale);
+    }
+
+  cycle[0] = a;
+  cycle[1] = b;
+}
+
 /*
  * local variables:
  * compile-command: "gcc -g -Wall -W -c rs-rainflow.c "

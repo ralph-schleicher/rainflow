@@ -131,6 +131,28 @@ extern int rs_rainflow_merge_cycles (double *__buffer, size_t *__count, size_t _
 extern int rs_rainflow_compare_ascending (void const *__left, void const *__right);
 extern int rs_rainflow_compare_descending (void const *__left, void const *__right);
 
+/* Rainflow matrix.  */
+typedef struct rs_rainflow_matrix rs_rainflow_matrix_t;
+
+extern rs_rainflow_matrix_t *rs_rainflow_matrix_new (void);
+extern void rs_rainflow_matrix_delete (rs_rainflow_matrix_t *__obj);
+extern int rs_rainflow_matrix_add (rs_rainflow_matrix_t *__obj, double const *__cycle);
+extern int rs_rainflow_matrix_add3 (rs_rainflow_matrix_t *__obj, double __first, double __second, double __count);
+extern double rs_rainflow_matrix_get (rs_rainflow_matrix_t *__obj, double const *__cycle);
+extern double rs_rainflow_matrix_get2 (rs_rainflow_matrix_t *__obj, double __first, double __second);
+extern int rs_rainflow_matrix_limits (rs_rainflow_matrix_t *__obj, int __dim, double *__min, double *__max);
+extern size_t rs_rainflow_matrix_non_zero (rs_rainflow_matrix_t *__obj);
+extern void rs_rainflow_matrix_map (rs_rainflow_matrix_t *__obj, void (*__fun) (void *, double const *), void *__arg);
+
+extern double rs_rainflow_round_up (double __x, double __scale);
+extern double rs_rainflow_round_down (double __x, double __scale);
+extern double rs_rainflow_round_zero (double __x, double __scale);
+extern double rs_rainflow_round_inf (double __x, double __scale);
+
+extern void rs_rainflow_round_amplitude_mean (double *__cycle, double __scale);
+extern void rs_rainflow_round_range_mean (double *__cycle, double __scale);
+extern void rs_rainflow_round_from_to (double *__cycle, double __scale);
+
 RS_RAINFLOW_END_DECL
 
 #endif /* not RS_RAINFLOW_H */
