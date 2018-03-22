@@ -35,7 +35,7 @@
 
 noinst_LTLIBRARIES = libex.la
 noinst_PROGRAMS = ex-basic ex-rainflow ex-reservoir ex-infinite \
-ex-read1 ex-read1-short ex-read2 ex-read2-short
+ex-read1 ex-read1-short ex-read2 ex-read2-short ex-rainflow-matrix
 
 LDADD = libex.la
 
