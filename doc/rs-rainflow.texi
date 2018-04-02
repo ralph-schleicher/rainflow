@@ -82,6 +82,7 @@ preserved on all copies.
 
 @menu
 * Introduction::
+* User's Guide::
 * API Reference::
 * Examples::
 * Symbol Index::
@@ -90,7 +91,7 @@ preserved on all copies.
 @end menu
 
 
-@node Introduction, API Reference, Top, Top
+@node Introduction, User's Guide, Top, Top
 @chapter Introduction
 
 @cindex signal amplitude
@@ -103,10 +104,10 @@ preserved on all copies.
 @cindex signal value, trough
 @cindex cycle count
 Rainflow cycle counting is a widely accepted method for transforming a
-sequence of signal values into a sequence of cycles.  Each cycle is a
-tuple with three values.  The first value is the signal amplitude
-@math{@^s}, i.e. half the distance between the trough and peak signal
-value.  The second value is the mean value @math{@=s}, i.e. the
+sequence of signal values into an equivalent sequence of cycles.  Each
+cycle is a tuple with three values.  The first value is the signal
+amplitude @math{@^s}, i.e. half the distance between the trough and peak
+signal value.  The second value is the mean value @math{@=s}, i.e. the
 arithmetic mean of the trough and peak signal value.  The third value is
 the cycle count @math{n}, i.e. the number of alterations between the
 trough and peak signal value.  The cycle count can be expressed as the
@@ -121,7 +122,7 @@ signal value, the signal amplitude @math{\hat s} and mean value
 $$
 \eqalign{%
 \hat{s} &= {s_2 - s_1\over 2}\cr
-\bar{s} &= {s_1 + s_2\over 2}}
+\bar{s} &= {s_2 + s_1\over 2}}
 $$
 @end tex
 
@@ -145,26 +146,40 @@ Beside that, cycle counting is also useful to derive fatigue, duty
 cycle, or endurance spectra itself.
 
 
-@node API Reference, Examples, Introduction, Top
-@chapter API Reference
+@node User's Guide, API Reference, Introduction, Top
+@chapter User's Guide
 
 The @code{rs-rainflow} library contains functions to perform rainflow
-cycle counting.  All symbols described in this chapter are defined in
-the header file @file{rs-rainflow.h}.  The implementation has several
-features:
+cycle counting.  The implementation has several features:
 
 @itemize
 @item
 The procedure is re-entrant@footnote{But not thread safe.}, that means
-you can call it multiple times in a row until all input data is
-processed.
+you can call it multiple times in a row until all input data, i.e. the
+signal history, is processed.
 
 @item
 Support for different signal data types.  You can switch the signal data
 type between consecutive invocations.
 
 @item
+Intermediate values and holds are automatically removed from the signal
+history.
+
+@item
 Support for alternative memory managers.
+
+@item
+Support for different cycle representations.  You can choose between
+amplitude/mean, range/mean, and from/to cycle representation.  You can
+also enable signed cycles for the amplitude/mean and range/mean cycle
+representations so that you have no loss of information compared to the
+from/to cycle representation.
+
+@item
+Support for signal labels so that you can analyse which signal values,
+i.e. load cases, build the critical cycles, e.g. those with the highest
+damages.
 
 @item
 Cycles can be cached or shifted (consumed) according to your needs.
@@ -181,22 +196,490 @@ full cycles.
 @menu
 * Instantiation::
 * Execution::
-* Customization::
-* Sorting and Merging::
-* Enumerated Constants::
+* Customisation::
+* Sorting Cycles::
+* Rainflow Matrix::
 @end menu
 
 
-@node Instantiation, Execution, API Reference, API Reference
+@node Instantiation, Execution, User's Guide, User's Guide
 @section Instantiation
 
+@cindex object creation
+@cindex creating an object
+@cindex instantiating an object
+@cindex constructor
 You have to create a rainflow cycle counting object before you can start
-counting cycles.
+counting cycles.  Calling the @syref{rs_rainflow_new} function is the
+standard procedure to do so.
 
 @cindex object
 @cindex data type
 @cindex context
 @cindex state
+A rainflow cycle counting object has the opaque data type
+@syref{rs_rainflow_t}.  Therefore, you can only work with pointers to
+rainflow cycle counting objects.  For example,
+
+@smallexample
+rs_rainflow_t *@var{obj} = rs_rainflow_new ();
+@end smallexample
+
+@cindex alternative memory manager
+@cindex memory manager, alternative
+@cindex memory allocation
+@cindex allocation, memory
+The @syref{rs_rainflow_new} function utilises the standard memory
+management functions of the C library, i.e. @symb{malloc},
+@symb{realloc}, and @symb{free}.  The @syref{rs_rainflow_alloc} function
+is another rainflow cycle counting object creation function where you
+can specify alternative memory management functions.
+
+@cindex object deletion
+@cindex deleting an object
+@cindex destroying an object
+@cindex destructor
+You usually call @syref{rs_rainflow_delete} when you are done with a
+rainflow cycle counting object.  Then you call @syref{rs_rainflow_new}
+or @syref{rs_rainflow_alloc} if you need another rainflow cycle counting
+object.
+@cindex object reuse
+@cindex reusing an object
+The @syref{rs_rainflow_reset} convenience function has the same effect
+except that the reference to the rainflow cycle counting object remains
+the same.
+
+
+@node Execution, Customisation, Instantiation, User's Guide
+@section Execution
+
+@cindex rainflow cycle counting
+@cindex cycle counting, rainflow
+The @syref{rs_rainflow} function is the core procedure for counting
+cycles.  The result of rainflow cycle counting is a cycle counting
+sequence.  A cycle counting sequence is an array of double precision
+floating-point numbers where each row represents a cycle.  The first
+two elements of a cycle are used for the cycle representation and the
+third element contains the cycle count.
+
+@cindex length of cycle counting sequence
+@cindex cycle counting sequence, length
+You can call the @syref{rs_rainflow_cycles} function to determine the
+current length of the cycle counting sequence.
+@cindex shift cycle
+@cindex cycle, shift
+If cycles are available, then you can shift (consume) cycles by calling
+the @syref{rs_rainflow_shift} function.
+
+@cindex finish cycle counting
+@cindex cycle counting, finish
+@cindex terminate cycle counting
+Rainflow cycle counting ends when the @syref{rs_rainflow} function is
+called with a non-zero fourth argument.  You can also call the
+@syref{rs_rainflow_finish} convenience function to terminate cycle
+counting.
+
+When rainflow cycle counting is finished, you can still call the
+@syref{rs_rainflow_cycles} and @syref{rs_rainflow_shift} functions to
+consume the remaining cycles.
+
+@cindex capture cycle counting sequence
+@cindex cycle counting sequence, capture
+An alternative method to access the cycle counting sequence is to call
+the @syref{rs_rainflow_capture} function.  Calling this function makes
+you the owner of the cycle counting sequence.  Therefore, this is only
+possible if rainflow cycle counting is finished.
+
+
+@node Customisation, Sorting Cycles, Execution, User's Guide
+@section Customisation
+
+The state of a rainflow cycle counting object controls the behaviour of
+the @syref{rs_rainflow} function.  The default behaviour is as follows.
+
+@itemize
+@item
+The signal history is expected to be an array of double precision
+floating-point numbers whose elements can be accessed sequentially.
+
+@item
+Signal labels are disabled.
+
+@item
+Cycles are represented by amplitude and mean value.
+
+@item
+Similar consecutive cycles are merged by adding the individual cycle
+counts.
+
+@item
+The cycle counting sequence is cached by the rainflow cycle counting
+object.
+@end itemize
+
+@noindent
+The rest of this section shows you how to adjust these settings to suite
+your needs.
+
+@menu
+* Signal History::
+* Signal Labels::
+* Cycle Representation::
+* Merging Cycles::
+* Consuming Cycles::
+@end menu
+
+
+@node Signal History, Signal Labels, Customisation, Customisation
+@subsection Signal History
+
+You can provide the signal history in two ways; as an array of numbers,
+or via a user-defined call-back function.
+
+
+@anchor{Array of Numbers}
+@subsubsection Array of Numbers
+
+You can pass an array of numbers, i.e. a pointer to the first array
+element, as the second argument to the @syref{rs_rainflow} function.
+The data type of the array elements is defined by the
+@syref{rs_rainflow_set_signal_type} function.  The data type conversion
+from the array element type to the internal format is performed by the
+@syref{rs_rainflow} function.  All numeric C data types are supported
+that way.
+
+Please note that you can switch the array element type between
+consecutive invocations of the @syref{rs_rainflow} function.
+
+
+@anchor{User-defined Call-back Function}
+@subsubsection User-defined Call-back Function
+
+If your signal history is not an array of numbers, then you can write a
+user-defined call-back function and install it with the
+@syref{rs_rainflow_set_read_signals} function.
+@xref{Using Call-back Functions}, for an example.
+
+
+@node Signal Labels, Cycle Representation, Signal History, Customisation
+@subsection Signal Labels
+
+Signal labels can be used to assign an identifier to a signal value.
+This information is traced and recorded in the cycle counting sequence
+so that you can analyse which signal values were used to build a cycle.
+Signals labels are enabled or disabled by calling the
+@syref{rs_rainflow_set_signal_label} function.
+
+When signal labels are enabled, each cycle is a tuple with five
+elements.  The first three elements have the usual meaning, i.e. cycle
+representation and cycle count, the fourth element is the signal label
+of the @emph{from} signal value, and the fifth element is the signal
+label of the @emph{to} signal value.  Although a cycle is defined as an
+array of double precision floating-point numbers, any value that can be
+stored in the eight bytes of a @code{double} can be used as a signal
+label.
+
+There are two types of signal labels; implicit signal labels and
+explicit signal labels.
+
+
+@anchor{Implicit Signal Labels}
+@subsubsection Implicit Signal Labels
+
+Implicit signal labels are automatically assigned to a signal value by
+the @syref{rs_rainflow} function.  The signal label is an integer which
+is incremented after each signal value.  Thus, the signal label is like
+a linear index into the signal history.  The start index, i.e. the
+signal label of the first signal value, can be set via the
+@syref{rs_rainflow_set_signal_index} function.  The default start index
+is zero.
+
+Implicit signal labels only work with the built-in data types.  If you
+install a user-defined signal history access function, then you have to
+use explicit signal labels.
+
+
+@anchor{Explicit Signal Labels}
+@subsubsection Explicit Signal Labels
+
+Explicit signal labels have to be assigned in a user-defined signal
+history access function (@pxref{User-defined Call-back Function}).  That
+means the call-back function has to copy the signal value and the signal
+label.  For example, suppose the elements of a signal history are
+defined as follows:
+
+@smallexample
+@group
+struct sig
+  @{
+    /* @r{Signal value.}  */
+    float value;
+
+    /* @r{Signal label.}  */
+    char *label;
+  @};
+@end group
+@end smallexample
+
+@noindent
+With that the user-defined call-back function for reading elements from
+the signal history could look like this:
+
+@smallexample
+@group
+size_t
+read_signals (struct sig const *sig, double *buffer, size_t count)
+@{
+  size_t c;
+
+  for (c = count; c > 0; --c, ++sig)
+    @{
+      /* @r{Copy signal value.}  */
+      *buffer++ = sig->value;
+@end group
+
+@group
+      /* @r{Copy signal label.}  */
+      memcpy (buffer, &sig->label, sizeof (char *));
+      ++buffer;
+    @}
+
+  return count - c;
+@}
+@end group
+@end smallexample
+
+@noindent
+To play save, you should check at the beginning of your program if
+@w{@samp{sizeof (char *)}} is not greater than
+@w{@samp{sizeof (double)}}.  It is no problem if the inverse is true
+since argument @var{buffer} is initialised with zeros.  See the
+@syref{rs_rainflow_set_read_signals} function for more details about the
+calling conventions.
+
+
+@node Cycle Representation, Merging Cycles, Signal Labels, Customisation
+@subsection Cycle Representation
+
+A cycle is a tuple with three or five elements.  The first and second
+element is the cycle representation.  The third element is the cycle
+count, i.e. the number of half cycles.  If signal labels are enabled,
+then the fourth and fifth element are the from/to signal labels.  In C,
+a cycle is an array of three or five double precision floating-point
+numbers.
+
+The @code{rs-rainflow} library supports three different cycle
+representations.  You can choose between amplitude/mean, range/mean, and
+from/to cycle representation.  The cycle representation can be changed
+via the @syref{rs_rainflow_set_cycle_style} function but this has to be
+done before you start counting cycles.
+
+
+@anchor{Amplitude/Mean Cycle Representation}
+@subsubsection Amplitude/Mean Cycle Representation
+
+Amplitude/mean cycle representation is the default cycle representation
+of the @code{rs-rainflow} library.  Thus, a cycle has the form
+@math{@{s_a, s_m, n, t_1, t_2@}} where @math{s_a} is the signal
+amplitude, @math{s_m} is the signal mean, @math{n} is the cycle count,
+and @math{t_1} and @math{t_2} are the optional from/to signal labels.
+
+The signal amplitude is unsigned by default.  That means you can
+calculate the peak and trough signal value but you don't know the
+direction of the cycle@footnote{It would be possible with the help of
+signal labels since signal labels are always saved in chronological
+order of the signal values}.  You can enable signed cycle representation
+by calling the @syref{rs_rainflow_set_cycle_sign} function.  With that a
+positive signal amplitude means that the @emph{from} signal value is
+less than the @emph{to} signal value and a negative signal amplitude
+means that the @emph{from} signal value is greater than the @emph{to}
+signal value.
+
+
+@anchor{Range/Mean Cycle Representation}
+@subsubsection Range/Mean Cycle Representation
+
+Range/mean cycle representation is like amplitude/mean cycle
+representation except that the signal amplitude is replaced by the
+signal range, i.e. two times the signal amplitude.  Thus, a cycle has
+the form @math{@{s_r, s_m, n, @dots{}@}} where @math{s_r} is the signal
+range and @math{s_m} is the signal mean.
+
+
+@anchor{From/To Cycle Representation}
+@subsubsection From/To Cycle Representation
+
+With from/to cycle representation a cycle has the form
+@math{@{s_1, s_2, n, @dots{}@}} where @math{s_1} and @math{s_2} are
+the extrema values of the cycle in chronological order.
+
+
+@node Merging Cycles, Consuming Cycles, Cycle Representation, Customisation
+@subsection Merging Cycles
+
+Similar consecutive cycles are merged by adding the individual cycle
+counts.  This optimisation reduces the length of the cycle counting
+sequence without loosing any information.  Cycles are similar if the
+signal values and the optional signal labels are equal and in the
+correct chronological order.
+
+For example, if a half cycle from @math{s_1} to @math{s_2} is directly
+followed by a half cycle from @math{s_2} to @math{s_1}, then this is
+equal to a full cycle from @math{s_1} to @math{s_2}.  If another full
+cycle from @math{s_1} to @math{s_2} follows, then this is equal to two
+full cycles from @math{s_1} to @math{s_2}.
+
+You can enable or disable this feature via the
+@syref{rs_rainflow_set_merge_cycles} function.
+Merging cycles is enabled by default.
+
+
+@node Consuming Cycles,  , Merging Cycles, Customisation
+@subsection Consuming Cycles
+
+By default the cycle counting sequence is cached by the rainflow cycle
+counting object.  The length of the cycle counting sequence is estimated
+from the number of elements in the signal history.  See function
+@syref{rs_rainflow_set_length} for how to change the memory allocation
+strategy for the cycle counting sequence.
+
+You can call the @syref{rs_rainflow_cycles} function to determine the
+current length of the cycle counting sequence.  If cycles are available,
+then you can shift (consume) cycles by calling the
+@syref{rs_rainflow_shift} function.
+
+This explicit process can be automated by installing a user-defined
+call-back function via the @syref{rs_rainflow_set_shift_cycle} function.
+This call-back function is invoked by the @syref{rs_rainflow} function
+whenever a cycle can be added to the cycle counting sequence.  The
+benefit of this method is that the cached cycle counting sequence does
+not grow no matter how long the signal history is.  @xref{Using
+Call-back Functions} for an example.
+
+
+@node Sorting Cycles, Rainflow Matrix, Customisation, User's Guide
+@section Sorting Cycles
+
+After rainflow cycle counting has finished, you can sort the cycles of
+the cached cycle counting sequence with the @syref{rs_rainflow_sort}
+function.  You have to write a user-defined cycle comparison function
+for sorting cycles.  First you need a function to compare two
+floating-point numbers, like this one:
+
+@smallexample
+@group
+/* @r{Compare the number @var{a} against @var{b}.  If @var{a} is considered greater than @var{b}, the return value is}
+   @r{a positive number.  If @var{a} is considered less than @var{b}, the return value is a negative number.}
+   @r{If the two numbers are equal, the return value is zero.}  */
+int
+fcmp (double a, double b)
+@{
+  return (a > b) - (a < b);
+@}
+@end group
+@end smallexample
+
+@noindent
+Now we can use the @symb{fcmp} function to compare two cycles.
+
+@smallexample
+@group
+/* @r{Compare the cycle @var{a} against @var{b}.}  */
+int
+compare_cycles (double const *a, double const *b)
+@{
+  int diff;
+
+  diff = fcmp (a[0], b[0]);
+  if (diff != 0)
+    return diff;
+
+  return fcmp (a[1], b[1]);
+@}
+@end group
+@end smallexample
+
+The @symb{compare_cycles} function can be used to sort cycles in either
+ascending or descending order.  For the later, simply exchange the
+arguments @var{a} and @var{b}.  With @acronym{GNU} C, you can also use
+the expression @w{@samp{fcmp (a[0], b[0]) ? : fcmp (a[1], b[1])}}.
+Whether or not signal labels are considered by the cycle comparison
+function is your choice.
+
+
+@node Rainflow Matrix,  , Sorting Cycles, User's Guide
+@section Rainflow Matrix
+
+A rainflow matrix is also a kind of sorting but the two elements of the
+cycle representation are always sorted in strictly monotonic increasing
+order.  The cycle count of similar cycles is summed up.  Signal labels
+are always ignored.  The name rainflow matrix comes from the fact that
+the cycle representation can be considered as the row and column indices
+into a two-dimensional array and the cycle count is the corresponding
+matrix element.
+
+You can create and destroy a rainflow matrix by calling the
+@syref{rs_rainflow_matrix_new} function and
+@syref{rs_rainflow_matrix_delete} respectively.
+
+Cycles are added to the rainflow matrix by calling the
+@syref{rs_rainflow_matrix_add} or @syref{rs_rainflow_matrix_add3}
+function.  Matrix elements, i.e. the cycle counts, are queried via the
+@syref{rs_rainflow_matrix_get} or @syref{rs_rainflow_matrix_get2}
+function.
+
+You can query the range of a rainflow matrix dimension, i.e. the
+smallest and largest value of the corresponding element of the cycle
+representation, with the @syref{rs_rainflow_matrix_limits} function.
+
+The @syref{rs_rainflow_matrix_non_zero} function returns the number of
+non-zero elements in a rainflow matrix.  You can apply a function on
+each non-zero element by calling the @syref{rs_rainflow_matrix_map}
+function.
+
+Cycles are usually binned before they are added to a rainflow matrix.
+The @syref{rs_rainflow_round_amplitude_mean},
+@syref{rs_rainflow_round_range_mean}, and
+@syref{rs_rainflow_round_from_to} functions do this conservatively,
+i.e. the peak signal value is rounded up (toward positive infinity) and
+the trough signal value is rounded down (toward negative infinity).
+
+Here is a simple cycle shift function (@pxref{Consuming Cycles}) that
+adds the cycle to a rainflow matrix.
+
+@smallexample
+@group
+void
+shift_cycle (rs_rainflow_matrix_t *mat, double const *cycle)
+@{
+  double tem[3];
+
+  memcpy (tem, cycle, 3 * sizeof (double));
+  /* @r{Signal values are binned to a multiple or 20 MPa.  Thus, the signal}
+     @r{amplitude and signal mean are both binned to 10 MPa.}  */
+  rs_rainflow_round_amplitude_mean (tem, 20.0);
+  rs_rainflow_matrix_add (mat, tem);
+@}
+@end group
+@end smallexample
+
+
+@node API Reference, Examples, User's Guide, Top
+@chapter API Reference
+
+All symbols described in this chapter are defined in the header file
+@file{rs-rainflow.h}.
+
+@menu
+* Data Types::
+* Functions::
+* Enumerated Constants::
+@end menu
+
+
+@node Data Types, Functions, API Reference, API Reference
+@section Data Types
+
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_t}
 @deftp {Data Type} rs_rainflow_t
@@ -206,10 +689,19 @@ This is an opaque data type.  You only deal with pointers to rainflow
 cycle counting objects.
 @end deftp
 
-@cindex object creation
-@cindex creating an object
-@cindex instantiating an object
-@cindex constructor
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_matrix_t}
+@deftp {Data Type} rs_rainflow_matrix_t
+The data type of a rainflow matrix object.
+
+This is an opaque data type.  You only deal with pointers to rainflow
+matrix objects.
+@end deftp
+
+
+@node Functions, Enumerated Constants, Data Types, API Reference
+@section Functions
+
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_new}
 @deftypefun {rs_rainflow_t *} rs_rainflow_new (void)
@@ -220,37 +712,6 @@ case of an error, a null pointer is returned and @code{errno} is set to
 describe the error.
 @end deftypefun
 
-@cindex object deletion
-@cindex deleting an object
-@cindex destroying an object
-@cindex destructor
-@c ----------------------------------------------------------------------
-@anchor{rs_rainflow_delete}
-@deftypefun void rs_rainflow_delete (@w{rs_rainflow_t *@var{obj}})
-Delete a rainflow cycle counting object.
-
-@itemize
-@item
-Argument @var{obj} is a pointer to a rainflow cycle counting object.
-It is no error if argument @var{obj} is a null pointer.
-@end itemize
-
-Deleting a rainflow cycle counting object means to unconditionally
-return any allocated memory back to the system including the object
-itself.  After that, all references to the rainflow cycle counting
-object are void.
-@end deftypefun
-
-The @syref{rs_rainflow_new} function utilizes the standard memory
-management functions of the C library, i.e. @symb{malloc},
-@symb{realloc}, and @symb{free}.  There is another rainflow cycle
-counting object creation function where you can specify alternative
-memory management functions.
-
-@cindex alternative memory manager
-@cindex memory manager, alternative
-@cindex memory allocation
-@cindex allocation, memory
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_alloc}
 @deftypefun {rs_rainflow_t *} rs_rainflow_alloc (@w{void *(*@var{malloc}) (size_t)}, @w{void *(*@var{realloc}) (void *, size_t)}, @w{void (*@var{free}) (void *)})
@@ -291,15 +752,23 @@ Argument @var{malloc} or @var{realloc} is a null pointer.
 @end table
 @end deftypefun
 
-You usually call @syref{rs_rainflow_delete} when you are done with a
-rainflow cycle counting object.  Then you call @syref{rs_rainflow_new} or
-@syref{rs_rainflow_alloc} if you need another rainflow cycle counting
-object.  The following convenience function has the same effect except
-that the reference to the rainflow cycle counting object remains the
-same.
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_delete}
+@deftypefun void rs_rainflow_delete (@w{rs_rainflow_t *@var{obj}})
+Delete a rainflow cycle counting object.
 
-@cindex object reuse
-@cindex reusing an object
+@itemize
+@item
+Argument @var{obj} is a pointer to a rainflow cycle counting object.
+It is no error if argument @var{obj} is a null pointer.
+@end itemize
+
+Deleting a rainflow cycle counting object means to unconditionally
+return any allocated memory back to the system including the object
+itself.  After that, all references to the rainflow cycle counting
+object are void.
+@end deftypefun
+
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_reset}
 @deftypefun int rs_rainflow_reset (@w{rs_rainflow_t *@var{obj}})
@@ -325,60 +794,6 @@ Argument @var{obj} is a null pointer.
 @end table
 @end deftypefun
 
-
-@node Execution, Customization, Instantiation, API Reference
-@section Execution
-
-The @syref{rs_rainflow} function is the core procedure for counting
-cycles.  The result of the rainflow cycle counting method is a cycle
-counting sequence.  The state of a rainflow cycle counting object
-controls the behavior of the @syref{rs_rainflow} function.  The
-default behavior is as follows.
-
-@itemize
-@item
-The signal history is expected to be an array of double precision
-floating-point numbers whose elements can be accessed sequentially.
-
-See function @syref{rs_rainflow_set_signal_type} for how to change the
-array element type.  See function @syref{rs_rainflow_set_read_signals}
-for how to install a user-defined signal history access function.
-
-@item
-The cycle counting sequence is cached by the rainflow cycle counting
-object.
-
-See function @syref{rs_rainflow_set_shift_cycle} for how to install a
-user-defined function which will be called when a cycle can be added to
-the cycle counting sequence.
-
-@item
-The length of the cycle counting sequence is derived from the number of
-elements in the signal history.
-
-See function @syref{rs_rainflow_set_length} for how to change the memory
-allocation strategy for the cycle counting sequence.
-
-@item
-Similar consecutive cycles are merged by adding the individual cycle
-counts.  This optimization reduces the length of the cycle counting
-sequence without loosing any information.
-
-See function @syref{rs_rainflow_set_merge_cycles} for how to change this
-behavior.
-@end itemize
-
-You have to call the @syref{rs_rainflow} function to perform rainflow
-cycle counting.  After that, you can call the @syref{rs_rainflow_cycles}
-function to determine the current length of the cycle counting sequence.
-Then you can shift (consume) cycles by calling the @syref{rs_rainflow_shift}
-
-function.  After all signal values have been feed to the
-@syref{rs_rainflow} function, call the @syref{rs_rainflow_finish} function
-to terminate cycle counting.
-
-@cindex rainflow cycle counting
-@cindex cycle counting, rainflow
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow}
 @deftypefun int rs_rainflow (@w{rs_rainflow_t *@var{obj}}, @w{void *@var{sig}}, @w{size_t @var{sig_len}}, @w{int @var{finish}})
@@ -444,72 +859,6 @@ The number of cached cycles exceeds system limits.
 @end table
 @end deftypefun
 
-@cindex length of cycle counting sequence
-@cindex cycle counting sequence, length
-@c ----------------------------------------------------------------------
-@anchor{rs_rainflow_cycles}
-@deftypefun size_t rs_rainflow_cycles (@w{rs_rainflow_t *@var{obj}})
-Return the number of shiftable cycles.
-
-@itemize
-@item
-Argument @var{obj} is a pointer to a rainflow cycle counting object.
-@end itemize
-
-Return value is the number of shiftable cycles.  This can be zero.
-In case of an error, the return value is @samp{(size_t) -1} and
-@symb{errno} is set to describe the error.  The following error
-conditions are defined for this function:
-
-@table @code
-@item EINVAL
-Argument @var{obj} is a null pointer.
-@end table
-@end deftypefun
-
-@cindex shift cycle
-@cindex cycle, shift
-@c ----------------------------------------------------------------------
-@anchor{rs_rainflow_shift}
-@deftypefun int rs_rainflow_shift (@w{rs_rainflow_t *@var{obj}}, @w{void *@var{buffer}}, @w{size_t @var{count}})
-Shift (consume) the oldest cycles.
-
-@itemize
-@item
-First argument @var{obj} is a pointer to a rainflow cycle counting
-object.
-
-@item
-Second argument @var{buffer} is a pointer to a buffer where the cycles
-shall be stored.  If argument @var{buffer} is a null pointer, cycles are
-shifted but not stored.
-
-@item
-Third argument @var{count} is the number of cycles to be shifted.
-@end itemize
-
-The caller is responsible for providing a large enough buffer.
-
-Return value is zero on success.  In case of an error, the return value
-is -1 and @symb{errno} is set to describe the error.  The following
-error conditions are defined for this function:
-
-@table @code
-@item EINVAL
-Argument @var{obj} is a null pointer.
-
-@item EAGAIN
-There are not enough cycles available.
-@end table
-@end deftypefun
-
-Rainflow cycle counting ends when the @syref{rs_rainflow} function is
-called with a non-zero fourth argument.  There is a convenience function
-which does this explicitly:
-
-@cindex finish cycle counting
-@cindex cycle counting, finish
-@cindex terminate cycle counting
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_finish}
 @deftypefun int rs_rainflow_finish (@w{rs_rainflow_t *@var{obj}})
@@ -550,16 +899,64 @@ Calling this function is equal to
 @samp{@symb{rs_rainflow} (@var{obj}, NULL, 0, @symb{RS_RAINFLOW_FINISH})}.
 @end deftypefun
 
-When rainflow cycle counting is finished, you can still call the
-@syref{rs_rainflow_cycles} and @syref{rs_rainflow_shift} functions to
-consume the remaining cycles.  But there is an alternative method to
-access the cycle counting sequence:
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_cycles}
+@deftypefun size_t rs_rainflow_cycles (@w{rs_rainflow_t *@var{obj}})
+Return the number of shiftable cycles.
 
-@cindex capture cycle counting sequence
-@cindex cycle counting sequence, capture
+@itemize
+@item
+Argument @var{obj} is a pointer to a rainflow cycle counting object.
+@end itemize
+
+Return value is the number of shiftable cycles.  This can be zero.
+In case of an error, the return value is @samp{(size_t) -1} and
+@symb{errno} is set to describe the error.  The following error
+conditions are defined for this function:
+
+@table @code
+@item EINVAL
+Argument @var{obj} is a null pointer.
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_shift}
+@deftypefun int rs_rainflow_shift (@w{rs_rainflow_t *@var{obj}}, @w{double *@var{buffer}}, @w{size_t @var{count}})
+Shift (consume) the oldest cycles.
+
+@itemize
+@item
+First argument @var{obj} is a pointer to a rainflow cycle counting
+object.
+
+@item
+Second argument @var{buffer} is a pointer to a buffer where the cycles
+shall be stored.  If argument @var{buffer} is a null pointer, cycles are
+shifted but not stored.
+
+@item
+Third argument @var{count} is the number of cycles to be shifted.
+@end itemize
+
+The caller is responsible for providing a large enough buffer.
+
+Return value is zero on success.  In case of an error, the return value
+is -1 and @symb{errno} is set to describe the error.  The following
+error conditions are defined for this function:
+
+@table @code
+@item EINVAL
+Argument @var{obj} is a null pointer.
+
+@item EAGAIN
+There are not enough cycles available.
+@end table
+@end deftypefun
+
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_capture}
-@deftypefun {void *} rs_rainflow_capture (@w{rs_rainflow_t *@var{obj}})
+@deftypefun {double *} rs_rainflow_capture (@w{rs_rainflow_t *@var{obj}})
 Return the cycle counting sequence.
 
 @itemize
@@ -588,29 +985,46 @@ Cycle counting is not finished.
 @end table
 @end deftypefun
 
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_set_length}
+@deftypefun int rs_rainflow_set_length (@w{rs_rainflow_t *@var{obj}}, @w{size_t @var{len}}, @w{size_t @var{add}})
+Provide hints for memory allocation.
 
-@node Customization, Sorting and Merging, Execution, API Reference
-@section Customization
+The default is to infer internal buffer sizes from the number of
+elements in the signal history.
 
-The default values can be restored with the following sequence of
-statements.
+@itemize
+@item
+First argument @var{obj} is a pointer to a rainflow cycle counting
+object.
 
-@example
-@group
-rs_rainflow_set_length (@var{obj}, 0, 0);
-rs_rainflow_set_signal_type (@var{obj}, RS_RAINFLOW_TYPE_DOUBLE);
-rs_rainflow_set_shift_cycle (@var{obj}, NULL, NULL);
-rs_rainflow_set_merge_cycles (@var{obj}, 1);
-@end group
-@end example
+@item
+Second argument @var{len} is the initial number of elements.  A value of
+zero means to infer this number from the signal length.
 
-@noindent
-The individual functions are documented below.
+@item
+Third argument @var{add} is the number of elements to be added iff a
+buffer has to grow.  A value of zero means to infer this number from the
+value of argument @var{len}.
+@end itemize
+
+Return value is zero on success.  In case of an error, the return value
+is -1 and @symb{errno} is set to describe the error.  The following
+error conditions are defined for this function:
+
+@table @code
+@item EINVAL
+Argument @var{obj} is a null pointer.
+
+@item EBUSY
+Cycle counting has already started.
+@end table
+@end deftypefun
 
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_set_signal_type}
 @deftypefun int rs_rainflow_set_signal_type (@w{rs_rainflow_t *@var{obj}}, @w{int @var{type}})
-Customize the array element type.
+Customise the array element type.
 
 The default is a double precision floating-point number.
 
@@ -630,7 +1044,7 @@ an array with elements of the specified type and that the array elements
 can be accessed sequentially.
 
 You can specify the predefined array element type
-@syref{RS_RAINFLOW_TYPE_UNKNOWN} to clear any assumption about
+@symb{RS_RAINFLOW_TYPE_UNKNOWN} to clear any assumption about
 how signal values are stored in the signal history.  See function
 @syref{rs_rainflow_set_read_signals} for how to install a user-defined
 signal history access function.
@@ -656,7 +1070,7 @@ Argument @var{type} is not one of the predefined array element types.
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_set_read_signals}
 @deftypefun int rs_rainflow_set_read_signals (@w{rs_rainflow_t *@var{obj}}, @w{size_t (*@var{fun}) (void *, double *, size_t)}, @w{size_t @var{incr}})
-Customize the signal history access function.
+Customise the signal history access function.
 
 @itemize
 @item
@@ -719,8 +1133,8 @@ than zero.
 
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_set_shift_cycle}
-@deftypefun int rs_rainflow_set_shift_cycle (@w{rs_rainflow_t *@var{obj}}, @w{void (*@var{fun}) (void *, double, double, double)}, @w{void *@var{arg}})
-Customize the cycle shift function.
+@deftypefun int rs_rainflow_set_shift_cycle (@w{rs_rainflow_t *@var{obj}}, @w{void (*@var{fun}) (void *, double const *)}, @w{void *@var{arg}})
+Customise the cycle shift function.
 
 Default is to cache shifted cycles.
 
@@ -730,7 +1144,7 @@ First argument @var{obj} is a pointer to a rainflow cycle counting
 object.
 
 @item
-Second argument @var{fun} is the address of a function with four
+Second argument @var{fun} is the address of a function with two
 arguments.
 
 @itemize @minus
@@ -738,13 +1152,7 @@ arguments.
 First argument is the value of the @var{arg} argument.
 
 @item
-Second argument is the signal amplitude of the shifted cycle.
-
-@item
-Third argument is the signal mean value of the shifted cycle.
-
-@item
-Fourth argument is the cycle count of the shifted cycle.
+Second argument is a pointer to the cycle.
 @end itemize
 
 @item
@@ -752,9 +1160,8 @@ Third argument @var{arg} is the first argument of the cycle shift
 function @var{fun}.
 @end itemize
 
-The  which will be called when a cycle can be added to the cycle counting
-    sequence
-
+The @var{fun} function will be called when a cycle can be added to the
+cycle counting sequence.
 
 Return value is zero on success.  In case of an error, the return value
 is -1 and @symb{errno} is set to describe the error.  The following
@@ -776,12 +1183,17 @@ null pointer.
 @end deftypefun
 
 @c ----------------------------------------------------------------------
-@anchor{rs_rainflow_set_length}
-@deftypefun int rs_rainflow_set_length (@w{rs_rainflow_t *@var{obj}}, @w{size_t @var{len}}, @w{size_t @var{add}})
-Provide hints for memory allocation.
+@anchor{rs_rainflow_set_signal_label}
+@deftypefun int rs_rainflow_set_signal_label (@w{rs_rainflow_t *@var{obj}}, @w{int @var{label}})
+Define whether or not to enable signal labels.
 
-The default is to infer internal buffer sizes from the number of
-elements in the signal history.
+Signal labels are either implicit or explicit.  If no user-defined
+signal history access function is defined, implicit signal labels are in
+effect.  Implicit signal labels start with the number defined by the
+@syref{rs_rainflow_set_signal_index} function and increment by one for
+each new signal value.  If a user-defined signal history access function
+is defined and signal labels are enabled, the signal labels have to be
+provided by the user-defined signal history access function.
 
 @itemize
 @item
@@ -789,13 +1201,7 @@ First argument @var{obj} is a pointer to a rainflow cycle counting
 object.
 
 @item
-Second argument @var{len} is the initial number of elements.  A value of
-zero means to infer this number from the signal length.
-
-@item
-Third argument @var{add} is the number of elements to be added iff a
-buffer has to grow.  A value of zero means to infer this number from the
-value of argument @var{len}.
+If second argument @var{label} is non-zero, enable signal labels cycles.
 @end itemize
 
 Return value is zero on success.  In case of an error, the return value
@@ -805,10 +1211,13 @@ error conditions are defined for this function:
 @table @code
 @item EINVAL
 Argument @var{obj} is a null pointer.
-
-@item EBUSY
-Cycle counting has already started.
 @end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_set_signal_index}
+@deftypefun int rs_rainflow_set_signal_index (@w{rs_rainflow_t *@var{obj}}, @w{double @var{index}})
+To be written.
 @end deftypefun
 
 @c ----------------------------------------------------------------------
@@ -844,25 +1253,54 @@ Cycle counting has already started.
 @end table
 @end deftypefun
 
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_set_cycle_style}
+@deftypefun int rs_rainflow_set_cycle_style (@w{rs_rainflow_t *@var{obj}}, @w{int @var{style}})
+Change the cycle representation.
 
-@node Sorting and Merging, Enumerated Constants, Customization, API Reference
-@section Sorting and Merging
+Return value is zero on success.  In case of an error, the return value
+is -1 and @symb{errno} is set to describe the error.  The following
+error conditions are defined for this function:
 
-The functions in this section sort and compare @emph{cycles}.  Each
-cycle is an array of three double precision floating-point numbers.  The
-first element of a cycle is the signal amplitude, the second element is
-the signal mean value, and the third element is the number of half
-cycles.
+@table @code
+@item EINVAL
+One of the following is true.
 
-@menu
-* High-Level Procedures::
-* Low-Level Procedures::
-* Comparison Functions::
-@end menu
+@itemize
+@item
+Argument @var{obj} is a null pointer.
 
+@item
+Argument @var{style} is an invalid cycle representation.
+@end itemize
 
-@node High-Level Procedures, Low-Level Procedures, Sorting and Merging, Sorting and Merging
-@subsection High-Level Procedures
+@item EBUSY
+Cycle counting has already started.
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_set_cycle_sign}
+@deftypefun int rs_rainflow_set_cycle_sign (@w{rs_rainflow_t *@var{obj}}, @w{int @var{flag}})
+Enable or disable signed cycle representation.
+
+Return value is zero on success.  In case of an error, the return value
+is -1 and @symb{errno} is set to describe the error.  The following
+error conditions are defined for this function:
+
+@table @code
+@item EINVAL
+One of the following is true.
+
+@itemize
+@item
+Argument @var{obj} is a null pointer.
+@end itemize
+
+@item EBUSY
+Cycle counting has already started.
+@end table
+@end deftypefun
 
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_sort}
@@ -894,41 +1332,17 @@ Argument @var{obj} is a null pointer.
 @end table
 @end deftypefun
 
-
-@node Low-Level Procedures, Comparison Functions, High-Level Procedures, Sorting and Merging
-@subsection Low-Level Procedures
-
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_sort_cycles}
-@deftypefun int rs_rainflow_sort_cycles (@w{void *@var{buffer}}, @w{size_t @var{count}}, @w{int (*@var{compare}) (void const *, void const *)})
+@deftypefun int rs_rainflow_sort_cycles (@w{double *@var{buffer}}, @w{size_t @var{count}}, @w{int (*@var{compare}) (void const *, void const *)})
 @end deftypefun
 
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_merge_cycles}
-@deftypefun int rs_rainflow_merge_cycles (@w{void *@var{buffer}}, @w{size_t *@var{count}}, @w{int (*@var{compare}) (void const *, void const *)})
+@deftypefun int rs_rainflow_merge_cycles (@w{double *@var{buffer}}, @w{size_t *@var{count}}, @w{int (*@var{compare}) (void const *, void const *)})
 @end deftypefun
 
-
-@node Comparison Functions,  , Low-Level Procedures, Sorting and Merging
-@subsection Comparison Functions
-
-@c ----------------------------------------------------------------------
-@anchor{rs_rainflow_compare_descending}
-@deftypefun int rs_rainflow_compare_descending (@w{void const *@var{left}}, @w{void const *@var{right}})
-Compare two cycles in descending order.
-
-Cycles are first compared by the signal amplitude.  If the signal
-amplitude is equal, then the cycles are compared by the mean value.
-
-@itemize
-@item
-First argument @var{left} is the address of a cycle.
-
-@item
-Second argument @var{right} is the address of a cycle.
-@end itemize
-@end deftypefun
-
+@anchor{Comparison Functions}
 @c ----------------------------------------------------------------------
 @anchor{rs_rainflow_compare_ascending}
 @deftypefun int rs_rainflow_compare_ascending (@w{void const *@var{left}}, @w{void const *@var{right}})
@@ -946,8 +1360,345 @@ Second argument @var{right} is the address of a cycle.
 @end itemize
 @end deftypefun
 
+@anchor{rs_rainflow_compare_descending}
+@c ----------------------------------------------------------------------
+@deftypefun int rs_rainflow_compare_descending (@w{void const *@var{left}}, @w{void const *@var{right}})
+Compare two cycles in descending order.
 
-@node Enumerated Constants,  , Sorting and Merging, API Reference
+Cycles are first compared by the signal amplitude.  If the signal
+amplitude is equal, then the cycles are compared by the mean value.
+
+@itemize
+@item
+First argument @var{left} is the address of a cycle.
+
+@item
+Second argument @var{right} is the address of a cycle.
+@end itemize
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_matrix_new}
+@deftypefun {rs_rainflow_matrix_t *} rs_rainflow_matrix_new (void)
+Create a rainflow matrix object.
+
+Return value is a pointer to a new rainflow matrix object.  In case of
+an error, a null pointer is returned and @code{errno} is set to describe
+the error.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_matrix_delete}
+@deftypefun void rs_rainflow_matrix_delete (@w{rs_rainflow_matrix_t *@var{obj}})
+Delete a rainflow matrix object.
+
+@itemize
+@item
+Argument @var{obj} is a pointer to a rainflow matrix object.  It is no
+error if argument @var{obj} is a null pointer.
+@end itemize
+
+Deleting a rainflow matrix object means to unconditionally return any
+allocated memory back to the system including the object itself.  After
+that, all references to the rainflow matrix object are void.
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_matrix_add}
+@deftypefun int rs_rainflow_matrix_add (@w{rs_rainflow_matrix_t *@var{obj}}, @w{double const *@var{cycle}})
+Add the cycle count of a cycle to the rainflow matrix.
+
+@itemize
+@item
+First argument @var{obj} is a pointer to a rainflow matrix object.
+
+@item
+Second argument @var{cycle} is a pointer to a cycle.
+@end itemize
+
+The cycle representation of @var{cycle}, i.e. the first and second
+element, should be discretised according to the desired bin edges of the
+rainflow matrix.  Third element of @var{cycle} is the cycle count.
+
+Return value is zero on success.  In case of an error, the return value
+is -1 and @symb{errno} is set to describe the error.  The following
+error conditions are defined for this function:
+
+@table @code
+@item EINVAL
+Argument @var{obj} or @var{cycle} is a null pointer.
+
+@item EDOM
+The first or second element of @var{cycle} is not-a-number.
+
+@item ERANGE
+The third element of @var{cycle} is not-a-number or less than zero.
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_matrix_add3}
+@deftypefun int rs_rainflow_matrix_add3 (@w{rs_rainflow_matrix_t *@var{obj}}, @w{double @var{first}}, @w{double @var{second}}, @w{double @var{count}})
+Add the cycle count of a cycle to the rainflow matrix.
+
+@itemize
+@item
+First argument @var{obj} is a pointer to a rainflow matrix object.
+
+@item
+Second argument @var{first} is the index of the first dimension of the
+rainflow matrix.  This is usually the first element of the cycle
+representation.
+
+@item
+Third argument @var{second} is the index of the second dimension of the
+rainflow matrix.  This is usually the second element of the cycle
+representation.
+
+@item
+Fourth argument @var{count} is the cycle count.
+@end itemize
+
+Return value is zero on success.  In case of an error, the return value
+is -1 and @symb{errno} is set to describe the error.  The following
+error conditions are defined for this function:
+
+@table @code
+@item EINVAL
+Argument @var{obj} is a null pointer.
+
+@item EDOM
+Argument @var{first} or @var{second} is not-a-number.
+
+@item ERANGE
+Argument @var{count} is not-a-number or less than zero.
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_matrix_get}
+@deftypefun double rs_rainflow_matrix_get (@w{rs_rainflow_matrix_t *@var{obj}}, @w{double const *@var{cycle}})
+Get the cycle count of a cycle from the rainflow matrix.
+
+@itemize
+@item
+First argument @var{obj} is a pointer to a rainflow matrix object.
+
+@item
+Second argument @var{cycle} is a pointer to a cycle.
+@end itemize
+
+The cycle representation of @var{cycle}, i.e. the first and second
+element, should be discretised according to the desired bin edges of the
+rainflow matrix.
+
+Return value is the cycle count.  In case of an error, the return value
+is not-a-number and @symb{errno} is set to describe the error.  The
+following error conditions are defined for this function:
+
+@table @code
+@item EINVAL
+Argument @var{obj} or @var{cycle} is a null pointer.
+
+@item EDOM
+The first or second element of @var{cycle} is not-a-number.
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_matrix_get2}
+@deftypefun double rs_rainflow_matrix_get2 (@w{rs_rainflow_matrix_t *@var{obj}}, @w{double @var{first}}, @w{double @var{second}})
+Get the cycle count of a cycle from the rainflow matrix.
+
+@itemize
+@item
+First argument @var{obj} is a pointer to a rainflow matrix object.
+
+@item
+Second argument @var{first} is the index of the first dimension of the
+rainflow matrix.  This is usually the first element of the cycle
+representation.
+
+@item
+Third argument @var{second} is the index of the second dimension of the
+rainflow matrix.  This is usually the second element of the cycle
+representation.
+@end itemize
+
+Return value is the cycle count.  In case of an error, the return value
+is not-a-number and @symb{errno} is set to describe the error.  The
+following error conditions are defined for this function:
+
+@table @code
+@item EINVAL
+Argument @var{obj} is a null pointer.
+
+@item EDOM
+Argument @var{first} or @var{second} is not-a-number.
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_matrix_limits}
+@deftypefun int rs_rainflow_matrix_limits (@w{rs_rainflow_matrix_t *@var{obj}}, @w{int @var{dim}}, @w{double *@var{min}}, @w{double *@var{max}})
+Get the lower and upper bound of a rainflow matrix dimension.
+
+@itemize
+@item
+First argument @var{obj} is a pointer to a rainflow matrix object.
+
+@item
+Second argument @var{dim} is the rainflow matrix dimension.  Value is
+either zero, i.e. the first dimension, or 1, i.e. the second dimension.
+
+@item
+Third argument @var{min} is the address where to store the value of the
+lower bound.  No value will be stored if @var{min} is a null pointer.
+
+@item
+Fourth argument @var{max} is the address where to store the value of the
+upper bound.  No value will be stored if @var{max} is a null pointer.
+@end itemize
+
+Return value is zero on success.  In case of an error, the return value
+is -1 and @symb{errno} is set to describe the error.  The following
+error conditions are defined for this function:
+
+@table @code
+@item EINVAL
+Argument @var{obj} is a null pointer.
+
+@item ERANGE
+The rainflow matrix is empty.
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_matrix_non_zero}
+@deftypefun size_t rs_rainflow_matrix_non_zero (@w{rs_rainflow_matrix_t *@var{obj}})
+Return the number of non-zero elements of a rainflow matrix.
+
+@itemize
+@item
+Argument @var{obj} is a pointer to a rainflow matrix object.
+@end itemize
+
+Return value is zero on success.  In case of an error, the return value
+is -1 and @symb{errno} is set to describe the error.  The following
+error conditions are defined for this function:
+
+@table @code
+@item EINVAL
+Argument @var{obj} is a null pointer.
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_matrix_map}
+@deftypefun void rs_rainflow_matrix_map (@w{rs_rainflow_matrix_t *@var{obj}}, @w{void (*@var{fun}) (void *, double const *)}, @w{void *@var{arg}})
+Apply a function on any non-zero element of a rainflow matrix.
+
+@itemize
+@item
+First argument @var{obj} is a pointer to a rainflow matrix object.
+
+@item
+Second argument @var{fun} is the address of a function with two
+arguments.
+
+@itemize @minus
+@item
+First argument is the value of the @var{arg} argument.
+
+@item
+Second argument is a pointer to the cycle.
+@end itemize
+
+@item
+Third argument @var{arg} is the first argument of the function
+@var{fun}.
+@end itemize
+
+In case of an error, @symb{errno} is set to describe the error.  The
+following error conditions are defined for this function:
+
+@table @code
+@item EINVAL
+Argument @var{obj} or @var{fun} is a null pointer.
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_round_amplitude_mean}
+@anchor{rs_rainflow_round_range_mean}
+@anchor{rs_rainflow_round_from_to}
+@deftypefun void rs_rainflow_round_amplitude_mean (@w{double *@var{cycle}}, @w{double @var{scale}})
+@deftypefunx void rs_rainflow_round_range_mean (@w{double *@var{cycle}}, @w{double @var{scale}})
+@deftypefunx void rs_rainflow_round_from_to (@w{double *@var{cycle}}, @w{double @var{scale}})
+Round the signal values of @var{cycle} to a multiple of @var{scale}.
+
+@itemize
+@item
+First argument @var{cycle} is the address of a cycle.
+
+@item
+Second argument @var{scale} is the rounding scale factor.  Value has to
+be a positive number.
+@end itemize
+
+The cycle representation of @var{cycle} is modified in-place.
+
+@table @code
+@item rs_rainflow_round_amplitude_mean
+Round an amplitude/mean cycle representation.
+
+@item rs_rainflow_round_range_mean
+Round a range/mean cycle representation.
+
+@item rs_rainflow_round_from_to
+Round a from/to cycle representation.
+@end table
+@end deftypefun
+
+@c ----------------------------------------------------------------------
+@anchor{rs_rainflow_round_up}
+@anchor{rs_rainflow_round_down}
+@anchor{rs_rainflow_round_zero}
+@anchor{rs_rainflow_round_inf}
+@deftypefun double rs_rainflow_round_up (@w{double @var{number}}, @w{double @var{scale}})
+@deftypefunx double rs_rainflow_round_down (@w{double @var{number}}, @w{double @var{scale}})
+@deftypefunx double rs_rainflow_round_zero (@w{double @var{number}}, @w{double @var{scale}})
+@deftypefunx double rs_rainflow_round_inf (@w{double @var{number}}, @w{double @var{scale}})
+Round @var{number} to a multiple of @var{scale}.
+
+@itemize
+@item
+First argument @var{number} is a number.
+
+@item
+Second argument @var{scale} is the rounding scale factor.  Value has to
+be a positive number.
+@end itemize
+
+Return value is the rounded number.
+
+@table @code
+@item rs_rainflow_round_up
+Round towards plus infinity.
+
+@item rs_rainflow_round_down
+Round towards minus infinity.
+
+@item rs_rainflow_round_zero
+Round towards zero (away from infinity).
+
+@item rs_rainflow_round_inf
+Round away from zero (towards infinity).
+@end table
+@end deftypefun
+
+
+@node Enumerated Constants,  , Functions, API Reference
 @section Enumerated Constants
 
 @menu
@@ -959,6 +1710,26 @@ Second argument @var{right} is the address of a cycle.
 @node Array Element Types, Extended Error Codes, Enumerated Constants, Enumerated Constants
 @subsection Array Element Types
 
+@c ----------------------------------------------------------------------
+@anchor{RS_RAINFLOW_TYPE_UNKNOWN}
+@anchor{RS_RAINFLOW_TYPE_DOUBLE}
+@anchor{RS_RAINFLOW_TYPE_FLOAT}
+@anchor{RS_RAINFLOW_TYPE_CHAR}
+@anchor{RS_RAINFLOW_TYPE_UCHAR}
+@anchor{RS_RAINFLOW_TYPE_SHORT}
+@anchor{RS_RAINFLOW_TYPE_USHORT}
+@anchor{RS_RAINFLOW_TYPE_INT}
+@anchor{RS_RAINFLOW_TYPE_UINT}
+@anchor{RS_RAINFLOW_TYPE_LONG}
+@anchor{RS_RAINFLOW_TYPE_ULONG}
+@anchor{RS_RAINFLOW_TYPE_INT8_T}
+@anchor{RS_RAINFLOW_TYPE_UINT8_T}
+@anchor{RS_RAINFLOW_TYPE_INT16_T}
+@anchor{RS_RAINFLOW_TYPE_UINT16_T}
+@anchor{RS_RAINFLOW_TYPE_INT32_T}
+@anchor{RS_RAINFLOW_TYPE_UINT32_T}
+@anchor{RS_RAINFLOW_TYPE_INT64_T}
+@anchor{RS_RAINFLOW_TYPE_UINT64_T}
 @deftypevr  {Constant} int RS_RAINFLOW_TYPE_UNKNOWN
 @deftypevrx {Constant} int RS_RAINFLOW_TYPE_DOUBLE
 @deftypevrx {Constant} int RS_RAINFLOW_TYPE_FLOAT
@@ -1145,7 +1916,7 @@ reservoir (rs_rainflow_t *obj, double *sig_buf, size_t sig_len)
         k = j;
     @}
 
-  /* Rearrange the cycle counting history so that it starts and ends
+  /* Rearrange the signal history so that it starts and ends
      with the global maximum.  */
   if (rs_rainflow (obj, sig_buf + k, sig_len - k, RS_RAINFLOW_CONTINUE) != 0)
     abort ();
@@ -1190,14 +1961,8 @@ The next function prints a single cycle to a stream.
 void
 print_cycle (FILE *stream, double const *cycle)
 @{
-  double ampl, mean, count;
-
-  ampl = cycle[0];
-  mean = cycle[1];
-  count = cycle[2];
-
   /* Print cycle count as the number of full cycles.  */
-  fprintf (stream, "%.5G;%.5G;%.5G\n", ampl, mean, count / 2.0);
+  fprintf (stream, "%.5G;%.5G;%.5G\n", cycle[0], cycle[1], cycle[2] / 2.0);
 @}
 @end group
 @end smallexample
@@ -1211,7 +1976,7 @@ The last function prints the whole cycle counting sequence of a
 void
 print_cycles (FILE *stream, rs_rainflow_t *obj)
 @{
-  double cycle[3];
+  double cycle[5];
   size_t n;
 
   for (n = rs_rainflow_cycles (obj); n > 0; --n)
@@ -1253,7 +2018,7 @@ Analysis}.  ASTM International, @uref{http://www.astm.org}.
 
 @c local variables:
 @c mode: outline-minor
-@c outline-regexp: "@\\(chapt\\|unnum\\|appen\\|section\\|subsection\\)"
+@c outline-regexp: "@\\(chap\\|unnum\\|appen\\|section\\|subsection\\)"
 @c time-stamp-format: "%:y-%02m-%02d"
 @c time-stamp-start: "^@set VERSION[    ]+"
 @c time-stamp-end: "$"
