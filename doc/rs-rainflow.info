@@ -32,6 +32,7 @@ preserved on all copies.
 * Menu:
 
 * Introduction::
+* User's Guide::
 * API Reference::
 * Examples::
 * Symbol Index::
@@ -39,18 +40,18 @@ preserved on all copies.
 * References::
 
 
-File: rs-rainflow.info,  Node: Introduction,  Next: API Reference,  Prev: Top,  Up: Top
+File: rs-rainflow.info,  Node: Introduction,  Next: User's Guide,  Prev: Top,  Up: Top
 
 1 Introduction
 **************
 
 Rainflow cycle counting is a widely accepted method for transforming a
-sequence of signal values into a sequence of cycles.  Each cycle is a
-tuple with three values.  The first value is the signal amplitude s^,
-i.e.  half the distance between the trough and peak signal value.  The
-second value is the mean value s=, i.e.  the arithmetic mean of the
-trough and peak signal value.  The third value is the cycle count n,
-i.e.  the number of alterations between the trough and peak signal
+sequence of signal values into an equivalent sequence of cycles.  Each
+cycle is a tuple with three values.  The first value is the signal
+amplitude s^, i.e.  half the distance between the trough and peak signal
+value.  The second value is the mean value s=, i.e.  the arithmetic mean
+of the trough and peak signal value.  The third value is the cycle count
+n, i.e.  the number of alterations between the trough and peak signal
 value.  The cycle count can be expressed as the number of full cycles or
 the number of half cycles.
 
@@ -61,22 +62,36 @@ Beside that, cycle counting is also useful to derive fatigue, duty
 cycle, or endurance spectra itself.
 
 
-File: rs-rainflow.info,  Node: API Reference,  Next: Examples,  Prev: Introduction,  Up: Top
+File: rs-rainflow.info,  Node: User's Guide,  Next: API Reference,  Prev: Introduction,  Up: Top
 
-2 API Reference
-***************
+2 User's Guide
+**************
 
 The 'rs-rainflow' library contains functions to perform rainflow cycle
-counting.  All symbols described in this chapter are defined in the
-header file 'rs-rainflow.h'.  The implementation has several features:
+counting.  The implementation has several features:
 
    * The procedure is re-entrant(1), that means you can call it multiple
-     times in a row until all input data is processed.
+     times in a row until all input data, i.e.  the signal history, is
+     processed.
 
    * Support for different signal data types.  You can switch the signal
      data type between consecutive invocations.
 
+   * Intermediate values and holds are automatically removed from the
+     signal history.
+
    * Support for alternative memory managers.
+
+   * Support for different cycle representations.  You can choose
+     between amplitude/mean, range/mean, and from/to cycle
+     representation.  You can also enable signed cycles for the
+     amplitude/mean and range/mean cycle representations so that you
+     have no loss of information compared to the from/to cycle
+     representation.
+
+   * Support for signal labels so that you can analyse which signal
+     values, i.e.  load cases, build the critical cycles, e.g.  those
+     with the highest damages.
 
    * Cycles can be cached or shifted (consumed) according to your needs.
 
@@ -90,22 +105,438 @@ cycles.
 
 * Instantiation::
 * Execution::
-* Customization::
-* Sorting and Merging::
-* Enumerated Constants::
+* Customisation::
+* Sorting Cycles::
+* Rainflow Matrix::
 
    ---------- Footnotes ----------
 
    (1) But not thread safe.
 
 
-File: rs-rainflow.info,  Node: Instantiation,  Next: Execution,  Prev: API Reference,  Up: API Reference
+File: rs-rainflow.info,  Node: Instantiation,  Next: Execution,  Prev: User's Guide,  Up: User's Guide
 
 2.1 Instantiation
 =================
 
 You have to create a rainflow cycle counting object before you can start
-counting cycles.
+counting cycles.  Calling the 'rs_rainflow_new' function is the standard
+procedure to do so.
+
+A rainflow cycle counting object has the opaque data type
+'rs_rainflow_t'.  Therefore, you can only work with pointers to rainflow
+cycle counting objects.  For example,
+
+     rs_rainflow_t *OBJ = rs_rainflow_new ();
+
+The 'rs_rainflow_new' function utilises the standard memory management
+functions of the C library, i.e. 'malloc', 'realloc', and 'free'.  The
+'rs_rainflow_alloc' function is another rainflow cycle counting object
+creation function where you can specify alternative memory management
+functions.
+
+You usually call 'rs_rainflow_delete' when you are done with a rainflow
+cycle counting object.  Then you call 'rs_rainflow_new' or
+'rs_rainflow_alloc' if you need another rainflow cycle counting object.
+The 'rs_rainflow_reset' convenience function has the same effect except
+that the reference to the rainflow cycle counting object remains the
+same.
+
+
+File: rs-rainflow.info,  Node: Execution,  Next: Customisation,  Prev: Instantiation,  Up: User's Guide
+
+2.2 Execution
+=============
+
+The 'rs_rainflow' function is the core procedure for counting cycles.
+The result of rainflow cycle counting is a cycle counting sequence.  A
+cycle counting sequence is an array of double precision floating-point
+numbers where each row represents a cycle.  The first two elements of a
+cycle are used for the cycle representation and the third element
+contains the cycle count.
+
+You can call the 'rs_rainflow_cycles' function to determine the current
+length of the cycle counting sequence.  If cycles are available, then
+you can shift (consume) cycles by calling the 'rs_rainflow_shift'
+function.
+
+Rainflow cycle counting ends when the 'rs_rainflow' function is called
+with a non-zero fourth argument.  You can also call the
+'rs_rainflow_finish' convenience function to terminate cycle counting.
+
+When rainflow cycle counting is finished, you can still call the
+'rs_rainflow_cycles' and 'rs_rainflow_shift' functions to consume the
+remaining cycles.
+
+An alternative method to access the cycle counting sequence is to call
+the 'rs_rainflow_capture' function.  Calling this function makes you the
+owner of the cycle counting sequence.  Therefore, this is only possible
+if rainflow cycle counting is finished.
+
+
+File: rs-rainflow.info,  Node: Customisation,  Next: Sorting Cycles,  Prev: Execution,  Up: User's Guide
+
+2.3 Customisation
+=================
+
+The state of a rainflow cycle counting object controls the behaviour of
+the 'rs_rainflow' function.  The default behaviour is as follows.
+
+   * The signal history is expected to be an array of double precision
+     floating-point numbers whose elements can be accessed sequentially.
+
+   * Signal labels are disabled.
+
+   * Cycles are represented by amplitude and mean value.
+
+   * Similar consecutive cycles are merged by adding the individual
+     cycle counts.
+
+   * The cycle counting sequence is cached by the rainflow cycle
+     counting object.
+
+The rest of this section shows you how to adjust these settings to suite
+your needs.
+
+* Menu:
+
+* Signal History::
+* Signal Labels::
+* Cycle Representation::
+* Merging Cycles::
+* Consuming Cycles::
+
+
+File: rs-rainflow.info,  Node: Signal History,  Next: Signal Labels,  Prev: Customisation,  Up: Customisation
+
+2.3.1 Signal History
+--------------------
+
+You can provide the signal history in two ways; as an array of numbers,
+or via a user-defined call-back function.
+
+2.3.1.1 Array of Numbers
+........................
+
+You can pass an array of numbers, i.e.  a pointer to the first array
+element, as the second argument to the 'rs_rainflow' function.  The data
+type of the array elements is defined by the
+'rs_rainflow_set_signal_type' function.  The data type conversion from
+the array element type to the internal format is performed by the
+'rs_rainflow' function.  All numeric C data types are supported that
+way.
+
+Please note that you can switch the array element type between
+consecutive invocations of the 'rs_rainflow' function.
+
+2.3.1.2 User-defined Call-back Function
+.......................................
+
+If your signal history is not an array of numbers, then you can write a
+user-defined call-back function and install it with the
+'rs_rainflow_set_read_signals' function.  *Note Using Call-back
+Functions::, for an example.
+
+
+File: rs-rainflow.info,  Node: Signal Labels,  Next: Cycle Representation,  Prev: Signal History,  Up: Customisation
+
+2.3.2 Signal Labels
+-------------------
+
+Signal labels can be used to assign an identifier to a signal value.
+This information is traced and recorded in the cycle counting sequence
+so that you can analyse which signal values were used to build a cycle.
+Signals labels are enabled or disabled by calling the
+'rs_rainflow_set_signal_label' function.
+
+When signal labels are enabled, each cycle is a tuple with five
+elements.  The first three elements have the usual meaning, i.e.  cycle
+representation and cycle count, the fourth element is the signal label
+of the _from_ signal value, and the fifth element is the signal label of
+the _to_ signal value.  Although a cycle is defined as an array of
+double precision floating-point numbers, any value that can be stored in
+the eight bytes of a 'double' can be used as a signal label.
+
+There are two types of signal labels; implicit signal labels and
+explicit signal labels.
+
+2.3.2.1 Implicit Signal Labels
+..............................
+
+Implicit signal labels are automatically assigned to a signal value by
+the 'rs_rainflow' function.  The signal label is an integer which is
+incremented after each signal value.  Thus, the signal label is like a
+linear index into the signal history.  The start index, i.e.  the signal
+label of the first signal value, can be set via the
+'rs_rainflow_set_signal_index' function.  The default start index is
+zero.
+
+Implicit signal labels only work with the built-in data types.  If you
+install a user-defined signal history access function, then you have to
+use explicit signal labels.
+
+2.3.2.2 Explicit Signal Labels
+..............................
+
+Explicit signal labels have to be assigned in a user-defined signal
+history access function (*note User-defined Call-back Function::).  That
+means the call-back function has to copy the signal value and the signal
+label.  For example, suppose the elements of a signal history are
+defined as follows:
+
+     struct sig
+       {
+         /* Signal value.  */
+         float value;
+
+         /* Signal label.  */
+         char *label;
+       };
+
+With that the user-defined call-back function for reading elements from
+the signal history could look like this:
+
+     size_t
+     read_signals (struct sig const *sig, double *buffer, size_t count)
+     {
+       size_t c;
+
+       for (c = count; c > 0; --c, ++sig)
+         {
+           /* Copy signal value.  */
+           *buffer++ = sig->value;
+
+           /* Copy signal label.  */
+           memcpy (buffer, &sig->label, sizeof (char *));
+           ++buffer;
+         }
+
+       return count - c;
+     }
+
+To play save, you should check at the beginning of your program if
+'sizeof (char *)' is not greater than 'sizeof (double)'.  It is no
+problem if the inverse is true since argument BUFFER is initialised with
+zeros.  See the 'rs_rainflow_set_read_signals' function for more details
+about the calling conventions.
+
+
+File: rs-rainflow.info,  Node: Cycle Representation,  Next: Merging Cycles,  Prev: Signal Labels,  Up: Customisation
+
+2.3.3 Cycle Representation
+--------------------------
+
+A cycle is a tuple with three or five elements.  The first and second
+element is the cycle representation.  The third element is the cycle
+count, i.e.  the number of half cycles.  If signal labels are enabled,
+then the fourth and fifth element are the from/to signal labels.  In C,
+a cycle is an array of three or five double precision floating-point
+numbers.
+
+The 'rs-rainflow' library supports three different cycle
+representations.  You can choose between amplitude/mean, range/mean, and
+from/to cycle representation.  The cycle representation can be changed
+via the 'rs_rainflow_set_cycle_style' function but this has to be done
+before you start counting cycles.
+
+2.3.3.1 Amplitude/Mean Cycle Representation
+...........................................
+
+Amplitude/mean cycle representation is the default cycle representation
+of the 'rs-rainflow' library.  Thus, a cycle has the form {s_a, s_m, n,
+t_1, t_2} where s_a is the signal amplitude, s_m is the signal mean, n
+is the cycle count, and t_1 and t_2 are the optional from/to signal
+labels.
+
+The signal amplitude is unsigned by default.  That means you can
+calculate the peak and trough signal value but you don't know the
+direction of the cycle(1).  You can enable signed cycle representation
+by calling the 'rs_rainflow_set_cycle_sign' function.  With that a
+positive signal amplitude means that the _from_ signal value is less
+than the _to_ signal value and a negative signal amplitude means that
+the _from_ signal value is greater than the _to_ signal value.
+
+2.3.3.2 Range/Mean Cycle Representation
+.......................................
+
+Range/mean cycle representation is like amplitude/mean cycle
+representation except that the signal amplitude is replaced by the
+signal range, i.e.  two times the signal amplitude.  Thus, a cycle has
+the form {s_r, s_m, n, ...} where s_r is the signal range and s_m is the
+signal mean.
+
+2.3.3.3 From/To Cycle Representation
+....................................
+
+With from/to cycle representation a cycle has the form {s_1, s_2, n,
+...} where s_1 and s_2 are the extrema values of the cycle in
+chronological order.
+
+   ---------- Footnotes ----------
+
+   (1) It would be possible with the help of signal labels since signal
+labels are always saved in chronological order of the signal values
+
+
+File: rs-rainflow.info,  Node: Merging Cycles,  Next: Consuming Cycles,  Prev: Cycle Representation,  Up: Customisation
+
+2.3.4 Merging Cycles
+--------------------
+
+Similar consecutive cycles are merged by adding the individual cycle
+counts.  This optimisation reduces the length of the cycle counting
+sequence without loosing any information.  Cycles are similar if the
+signal values and the optional signal labels are equal and in the
+correct chronological order.
+
+For example, if a half cycle from s_1 to s_2 is directly followed by a
+half cycle from s_2 to s_1, then this is equal to a full cycle from s_1
+to s_2.  If another full cycle from s_1 to s_2 follows, then this is
+equal to two full cycles from s_1 to s_2.
+
+You can enable or disable this feature via the
+'rs_rainflow_set_merge_cycles' function.  Merging cycles is enabled by
+default.
+
+
+File: rs-rainflow.info,  Node: Consuming Cycles,  Prev: Merging Cycles,  Up: Customisation
+
+2.3.5 Consuming Cycles
+----------------------
+
+By default the cycle counting sequence is cached by the rainflow cycle
+counting object.  The length of the cycle counting sequence is estimated
+from the number of elements in the signal history.  See function
+'rs_rainflow_set_length' for how to change the memory allocation
+strategy for the cycle counting sequence.
+
+You can call the 'rs_rainflow_cycles' function to determine the current
+length of the cycle counting sequence.  If cycles are available, then
+you can shift (consume) cycles by calling the 'rs_rainflow_shift'
+function.
+
+This explicit process can be automated by installing a user-defined
+call-back function via the 'rs_rainflow_set_shift_cycle' function.  This
+call-back function is invoked by the 'rs_rainflow' function whenever a
+cycle can be added to the cycle counting sequence.  The benefit of this
+method is that the cached cycle counting sequence does not grow no
+matter how long the signal history is.  *Note Using Call-back
+Functions:: for an example.
+
+
+File: rs-rainflow.info,  Node: Sorting Cycles,  Next: Rainflow Matrix,  Prev: Customisation,  Up: User's Guide
+
+2.4 Sorting Cycles
+==================
+
+After rainflow cycle counting has finished, you can sort the cycles of
+the cached cycle counting sequence with the 'rs_rainflow_sort' function.
+You have to write a user-defined cycle comparison function for sorting
+cycles.  First you need a function to compare two floating-point
+numbers, like this one:
+
+     /* Compare the number A against B.  If A is considered greater than B, the return value is
+        a positive number.  If A is considered less than B, the return value is a negative number.
+        If the two numbers are equal, the return value is zero.  */
+     int
+     fcmp (double a, double b)
+     {
+       return (a > b) - (a < b);
+     }
+
+Now we can use the 'fcmp' function to compare two cycles.
+
+     /* Compare the cycle A against B.  */
+     int
+     compare_cycles (double const *a, double const *b)
+     {
+       int diff;
+
+       diff = fcmp (a[0], b[0]);
+       if (diff != 0)
+         return diff;
+
+       return fcmp (a[1], b[1]);
+     }
+
+The 'compare_cycles' function can be used to sort cycles in either
+ascending or descending order.  For the later, simply exchange the
+arguments A and B.  With GNU C, you can also use the expression
+'fcmp (a[0], b[0]) ? : fcmp (a[1], b[1])'.  Whether or not signal labels
+are considered by the cycle comparison function is your choice.
+
+
+File: rs-rainflow.info,  Node: Rainflow Matrix,  Prev: Sorting Cycles,  Up: User's Guide
+
+2.5 Rainflow Matrix
+===================
+
+A rainflow matrix is also a kind of sorting but the two elements of the
+cycle representation are always sorted in strictly monotonic increasing
+order.  The cycle count of similar cycles is summed up.  Signal labels
+are always ignored.  The name rainflow matrix comes from the fact that
+the cycle representation can be considered as the row and column indices
+into a two-dimensional array and the cycle count is the corresponding
+matrix element.
+
+You can create and destroy a rainflow matrix by calling the
+'rs_rainflow_matrix_new' function and 'rs_rainflow_matrix_delete'
+respectively.
+
+Cycles are added to the rainflow matrix by calling the
+'rs_rainflow_matrix_add' or 'rs_rainflow_matrix_add3' function.  Matrix
+elements, i.e.  the cycle counts, are queried via the
+'rs_rainflow_matrix_get' or 'rs_rainflow_matrix_get2' function.
+
+You can query the range of a rainflow matrix dimension, i.e.  the
+smallest and largest value of the corresponding element of the cycle
+representation, with the 'rs_rainflow_matrix_limits' function.
+
+The 'rs_rainflow_matrix_non_zero' function returns the number of
+non-zero elements in a rainflow matrix.  You can apply a function on
+each non-zero element by calling the 'rs_rainflow_matrix_map' function.
+
+Cycles are usually binned before they are added to a rainflow matrix.
+The 'rs_rainflow_round_amplitude_mean', 'rs_rainflow_round_range_mean',
+and 'rs_rainflow_round_from_to' functions do this conservatively, i.e.
+the peak signal value is rounded up (toward positive infinity) and the
+trough signal value is rounded down (toward negative infinity).
+
+Here is a simple cycle shift function (*note Consuming Cycles::) that
+adds the cycle to a rainflow matrix.
+
+     void
+     shift_cycle (rs_rainflow_matrix_t *mat, double const *cycle)
+     {
+       double tem[3];
+
+       memcpy (tem, cycle, 3 * sizeof (double));
+       /* Signal values are binned to a multiple or 20 MPa.  Thus, the signal
+          amplitude and signal mean are both binned to 10 MPa.  */
+       rs_rainflow_round_amplitude_mean (tem, 20.0);
+       rs_rainflow_matrix_add (mat, tem);
+     }
+
+
+File: rs-rainflow.info,  Node: API Reference,  Next: Examples,  Prev: User's Guide,  Up: Top
+
+3 API Reference
+***************
+
+All symbols described in this chapter are defined in the header file
+'rs-rainflow.h'.
+
+* Menu:
+
+* Data Types::
+* Functions::
+* Enumerated Constants::
+
+
+File: rs-rainflow.info,  Node: Data Types,  Next: Functions,  Prev: API Reference,  Up: API Reference
+
+3.1 Data Types
+==============
 
  -- Data Type: rs_rainflow_t
      The data type of a rainflow cycle counting object.
@@ -113,28 +544,24 @@ counting cycles.
      This is an opaque data type.  You only deal with pointers to
      rainflow cycle counting objects.
 
+ -- Data Type: rs_rainflow_matrix_t
+     The data type of a rainflow matrix object.
+
+     This is an opaque data type.  You only deal with pointers to
+     rainflow matrix objects.
+
+
+File: rs-rainflow.info,  Node: Functions,  Next: Enumerated Constants,  Prev: Data Types,  Up: API Reference
+
+3.2 Functions
+=============
+
  -- Function: rs_rainflow_t * rs_rainflow_new (void)
      Create a rainflow cycle counting object.
 
      Return value is a pointer to a new rainflow cycle counting object.
      In case of an error, a null pointer is returned and 'errno' is set
      to describe the error.
-
- -- Function: void rs_rainflow_delete (rs_rainflow_t *OBJ)
-     Delete a rainflow cycle counting object.
-
-        * Argument OBJ is a pointer to a rainflow cycle counting object.
-          It is no error if argument OBJ is a null pointer.
-
-     Deleting a rainflow cycle counting object means to unconditionally
-     return any allocated memory back to the system including the object
-     itself.  After that, all references to the rainflow cycle counting
-     object are void.
-
-The 'rs_rainflow_new' function utilizes the standard memory management
-functions of the C library, i.e. 'malloc', 'realloc', and 'free'.  There
-is another rainflow cycle counting object creation function where you
-can specify alternative memory management functions.
 
  -- Function: rs_rainflow_t * rs_rainflow_alloc
           (void *(*MALLOC) (size_t), void *(*REALLOC) (void *, size_t),
@@ -170,11 +597,16 @@ can specify alternative memory management functions.
      'EINVAL'
           Argument MALLOC or REALLOC is a null pointer.
 
-You usually call 'rs_rainflow_delete' when you are done with a rainflow
-cycle counting object.  Then you call 'rs_rainflow_new' or
-'rs_rainflow_alloc' if you need another rainflow cycle counting object.
-The following convenience function has the same effect except that the
-reference to the rainflow cycle counting object remains the same.
+ -- Function: void rs_rainflow_delete (rs_rainflow_t *OBJ)
+     Delete a rainflow cycle counting object.
+
+        * Argument OBJ is a pointer to a rainflow cycle counting object.
+          It is no error if argument OBJ is a null pointer.
+
+     Deleting a rainflow cycle counting object means to unconditionally
+     return any allocated memory back to the system including the object
+     itself.  After that, all references to the rainflow cycle counting
+     object are void.
 
  -- Function: int rs_rainflow_reset (rs_rainflow_t *OBJ)
      Reset a rainflow cycle counting object.
@@ -192,54 +624,6 @@ reference to the rainflow cycle counting object remains the same.
 
      'EINVAL'
           Argument OBJ is a null pointer.
-
-
-File: rs-rainflow.info,  Node: Execution,  Next: Customization,  Prev: Instantiation,  Up: API Reference
-
-2.2 Execution
-=============
-
-The 'rs_rainflow' function is the core procedure for counting cycles.
-The result of the rainflow cycle counting method is a cycle counting
-sequence.  The state of a rainflow cycle counting object controls the
-behavior of the 'rs_rainflow' function.  The default behavior is as
-follows.
-
-   * The signal history is expected to be an array of double precision
-     floating-point numbers whose elements can be accessed sequentially.
-
-     See function 'rs_rainflow_set_signal_type' for how to change the
-     array element type.  See function 'rs_rainflow_set_read_signals'
-     for how to install a user-defined signal history access function.
-
-   * The cycle counting sequence is cached by the rainflow cycle
-     counting object.
-
-     See function 'rs_rainflow_set_shift_cycle' for how to install a
-     user-defined function which will be called when a cycle can be
-     added to the cycle counting sequence.
-
-   * The length of the cycle counting sequence is derived from the
-     number of elements in the signal history.
-
-     See function 'rs_rainflow_set_length' for how to change the memory
-     allocation strategy for the cycle counting sequence.
-
-   * Similar consecutive cycles are merged by adding the individual
-     cycle counts.  This optimization reduces the length of the cycle
-     counting sequence without loosing any information.
-
-     See function 'rs_rainflow_set_merge_cycles' for how to change this
-     behavior.
-
-You have to call the 'rs_rainflow' function to perform rainflow cycle
-counting.  After that, you can call the 'rs_rainflow_cycles' function to
-determine the current length of the cycle counting sequence.  Then you
-can shift (consume) cycles by calling the 'rs_rainflow_shift'
-
-function.  After all signal values have been feed to the 'rs_rainflow'
-function, call the 'rs_rainflow_finish' function to terminate cycle
-counting.
 
  -- Function: int rs_rainflow (rs_rainflow_t *OBJ, void *SIG,
           size_t SIG_LEN, int FINISH)
@@ -285,48 +669,6 @@ counting.
      'RS_RAINFLOW_ERROR_CYCLE_OVERFLOW'
           The number of cached cycles exceeds system limits.
 
- -- Function: size_t rs_rainflow_cycles (rs_rainflow_t *OBJ)
-     Return the number of shiftable cycles.
-
-        * Argument OBJ is a pointer to a rainflow cycle counting object.
-
-     Return value is the number of shiftable cycles.  This can be zero.
-     In case of an error, the return value is '(size_t) -1' and 'errno'
-     is set to describe the error.  The following error conditions are
-     defined for this function:
-
-     'EINVAL'
-          Argument OBJ is a null pointer.
-
- -- Function: int rs_rainflow_shift (rs_rainflow_t *OBJ, void *BUFFER,
-          size_t COUNT)
-     Shift (consume) the oldest cycles.
-
-        * First argument OBJ is a pointer to a rainflow cycle counting
-          object.
-
-        * Second argument BUFFER is a pointer to a buffer where the
-          cycles shall be stored.  If argument BUFFER is a null pointer,
-          cycles are shifted but not stored.
-
-        * Third argument COUNT is the number of cycles to be shifted.
-
-     The caller is responsible for providing a large enough buffer.
-
-     Return value is zero on success.  In case of an error, the return
-     value is -1 and 'errno' is set to describe the error.  The
-     following error conditions are defined for this function:
-
-     'EINVAL'
-          Argument OBJ is a null pointer.
-
-     'EAGAIN'
-          There are not enough cycles available.
-
-Rainflow cycle counting ends when the 'rs_rainflow' function is called
-with a non-zero fourth argument.  There is a convenience function which
-does this explicitly:
-
  -- Function: int rs_rainflow_finish (rs_rainflow_t *OBJ)
      Finish rainflow cycle counting.
 
@@ -352,12 +694,45 @@ does this explicitly:
      Calling this function is equal to ''rs_rainflow' (OBJ, NULL, 0,
      'RS_RAINFLOW_FINISH')'.
 
-When rainflow cycle counting is finished, you can still call the
-'rs_rainflow_cycles' and 'rs_rainflow_shift' functions to consume the
-remaining cycles.  But there is an alternative method to access the
-cycle counting sequence:
+ -- Function: size_t rs_rainflow_cycles (rs_rainflow_t *OBJ)
+     Return the number of shiftable cycles.
 
- -- Function: void * rs_rainflow_capture (rs_rainflow_t *OBJ)
+        * Argument OBJ is a pointer to a rainflow cycle counting object.
+
+     Return value is the number of shiftable cycles.  This can be zero.
+     In case of an error, the return value is '(size_t) -1' and 'errno'
+     is set to describe the error.  The following error conditions are
+     defined for this function:
+
+     'EINVAL'
+          Argument OBJ is a null pointer.
+
+ -- Function: int rs_rainflow_shift (rs_rainflow_t *OBJ, double *BUFFER,
+          size_t COUNT)
+     Shift (consume) the oldest cycles.
+
+        * First argument OBJ is a pointer to a rainflow cycle counting
+          object.
+
+        * Second argument BUFFER is a pointer to a buffer where the
+          cycles shall be stored.  If argument BUFFER is a null pointer,
+          cycles are shifted but not stored.
+
+        * Third argument COUNT is the number of cycles to be shifted.
+
+     The caller is responsible for providing a large enough buffer.
+
+     Return value is zero on success.  In case of an error, the return
+     value is -1 and 'errno' is set to describe the error.  The
+     following error conditions are defined for this function:
+
+     'EINVAL'
+          Argument OBJ is a null pointer.
+
+     'EAGAIN'
+          There are not enough cycles available.
+
+ -- Function: double * rs_rainflow_capture (rs_rainflow_t *OBJ)
      Return the cycle counting sequence.
 
         * Argument OBJ is a pointer to a rainflow cycle counting object.
@@ -380,25 +755,37 @@ cycle counting sequence:
      'EBUSY'
           Cycle counting is not finished.
 
-
-File: rs-rainflow.info,  Node: Customization,  Next: Sorting and Merging,  Prev: Execution,  Up: API Reference
+ -- Function: int rs_rainflow_set_length (rs_rainflow_t *OBJ,
+          size_t LEN, size_t ADD)
+     Provide hints for memory allocation.
 
-2.3 Customization
-=================
+     The default is to infer internal buffer sizes from the number of
+     elements in the signal history.
 
-The default values can be restored with the following sequence of
-statements.
+        * First argument OBJ is a pointer to a rainflow cycle counting
+          object.
 
-     rs_rainflow_set_length (OBJ, 0, 0);
-     rs_rainflow_set_signal_type (OBJ, RS_RAINFLOW_TYPE_DOUBLE);
-     rs_rainflow_set_shift_cycle (OBJ, NULL, NULL);
-     rs_rainflow_set_merge_cycles (OBJ, 1);
+        * Second argument LEN is the initial number of elements.  A
+          value of zero means to infer this number from the signal
+          length.
 
-The individual functions are documented below.
+        * Third argument ADD is the number of elements to be added iff a
+          buffer has to grow.  A value of zero means to infer this
+          number from the value of argument LEN.
+
+     Return value is zero on success.  In case of an error, the return
+     value is -1 and 'errno' is set to describe the error.  The
+     following error conditions are defined for this function:
+
+     'EINVAL'
+          Argument OBJ is a null pointer.
+
+     'EBUSY'
+          Cycle counting has already started.
 
  -- Function: int rs_rainflow_set_signal_type (rs_rainflow_t *OBJ,
           int TYPE)
-     Customize the array element type.
+     Customise the array element type.
 
      The default is a double precision floating-point number.
 
@@ -433,7 +820,7 @@ The individual functions are documented below.
 
  -- Function: int rs_rainflow_set_read_signals (rs_rainflow_t *OBJ,
           size_t (*FUN) (void *, double *, size_t), size_t INCR)
-     Customize the signal history access function.
+     Customise the signal history access function.
 
         * First argument OBJ is a pointer to a rainflow cycle counting
           object.
@@ -481,32 +868,26 @@ The individual functions are documented below.
                greater than zero.
 
  -- Function: int rs_rainflow_set_shift_cycle (rs_rainflow_t *OBJ,
-          void (*FUN) (void *, double, double, double), void *ARG)
-     Customize the cycle shift function.
+          void (*FUN) (void *, double const *), void *ARG)
+     Customise the cycle shift function.
 
      Default is to cache shifted cycles.
 
         * First argument OBJ is a pointer to a rainflow cycle counting
           object.
 
-        * Second argument FUN is the address of a function with four
+        * Second argument FUN is the address of a function with two
           arguments.
 
              - First argument is the value of the ARG argument.
 
-             - Second argument is the signal amplitude of the shifted
-               cycle.
-
-             - Third argument is the signal mean value of the shifted
-               cycle.
-
-             - Fourth argument is the cycle count of the shifted cycle.
+             - Second argument is a pointer to the cycle.
 
         * Third argument ARG is the first argument of the cycle shift
           function FUN.
 
-     The which will be called when a cycle can be added to the cycle
-     counting sequence
+     The FUN function will be called when a cycle can be added to the
+     cycle counting sequence.
 
      Return value is zero on success.  In case of an error, the return
      value is -1 and 'errno' is set to describe the error.  The
@@ -520,23 +901,24 @@ The individual functions are documented below.
              * Argument FUN is a null pointer and argument ARG is not a
                null pointer.
 
- -- Function: int rs_rainflow_set_length (rs_rainflow_t *OBJ,
-          size_t LEN, size_t ADD)
-     Provide hints for memory allocation.
+ -- Function: int rs_rainflow_set_signal_label (rs_rainflow_t *OBJ,
+          int LABEL)
+     Define whether or not to enable signal labels.
 
-     The default is to infer internal buffer sizes from the number of
-     elements in the signal history.
+     Signal labels are either implicit or explicit.  If no user-defined
+     signal history access function is defined, implicit signal labels
+     are in effect.  Implicit signal labels start with the number
+     defined by the 'rs_rainflow_set_signal_index' function and
+     increment by one for each new signal value.  If a user-defined
+     signal history access function is defined and signal labels are
+     enabled, the signal labels have to be provided by the user-defined
+     signal history access function.
 
         * First argument OBJ is a pointer to a rainflow cycle counting
           object.
 
-        * Second argument LEN is the initial number of elements.  A
-          value of zero means to infer this number from the signal
-          length.
-
-        * Third argument ADD is the number of elements to be added iff a
-          buffer has to grow.  A value of zero means to infer this
-          number from the value of argument LEN.
+        * If second argument LABEL is non-zero, enable signal labels
+          cycles.
 
      Return value is zero on success.  In case of an error, the return
      value is -1 and 'errno' is set to describe the error.  The
@@ -545,8 +927,9 @@ The individual functions are documented below.
      'EINVAL'
           Argument OBJ is a null pointer.
 
-     'EBUSY'
-          Cycle counting has already started.
+ -- Function: int rs_rainflow_set_signal_index (rs_rainflow_t *OBJ,
+          double INDEX)
+     To be written.
 
  -- Function: int rs_rainflow_set_merge_cycles (rs_rainflow_t *OBJ,
           int MERGE)
@@ -573,28 +956,39 @@ The individual functions are documented below.
      'EBUSY'
           Cycle counting has already started.
 
-
-File: rs-rainflow.info,  Node: Sorting and Merging,  Next: Enumerated Constants,  Prev: Customization,  Up: API Reference
+ -- Function: int rs_rainflow_set_cycle_style (rs_rainflow_t *OBJ,
+          int STYLE)
+     Change the cycle representation.
 
-2.4 Sorting and Merging
-=======================
+     Return value is zero on success.  In case of an error, the return
+     value is -1 and 'errno' is set to describe the error.  The
+     following error conditions are defined for this function:
 
-The functions in this section sort and compare _cycles_.  Each cycle is
-an array of three double precision floating-point numbers.  The first
-element of a cycle is the signal amplitude, the second element is the
-signal mean value, and the third element is the number of half cycles.
+     'EINVAL'
+          One of the following is true.
 
-* Menu:
+             * Argument OBJ is a null pointer.
 
-* High-Level Procedures::
-* Low-Level Procedures::
-* Comparison Functions::
+             * Argument STYLE is an invalid cycle representation.
 
-
-File: rs-rainflow.info,  Node: High-Level Procedures,  Next: Low-Level Procedures,  Prev: Sorting and Merging,  Up: Sorting and Merging
+     'EBUSY'
+          Cycle counting has already started.
 
-2.4.1 High-Level Procedures
----------------------------
+ -- Function: int rs_rainflow_set_cycle_sign (rs_rainflow_t *OBJ,
+          int FLAG)
+     Enable or disable signed cycle representation.
+
+     Return value is zero on success.  In case of an error, the return
+     value is -1 and 'errno' is set to describe the error.  The
+     following error conditions are defined for this function:
+
+     'EINVAL'
+          One of the following is true.
+
+             * Argument OBJ is a null pointer.
+
+     'EBUSY'
+          Cycle counting has already started.
 
  -- Function: int rs_rainflow_sort (rs_rainflow_t *OBJ,
           int (*COMPARE) (void const *, void const *))
@@ -618,34 +1012,11 @@ File: rs-rainflow.info,  Node: High-Level Procedures,  Next: Low-Level Procedure
      'EINVAL'
           Argument OBJ is a null pointer.
 
-
-File: rs-rainflow.info,  Node: Low-Level Procedures,  Next: Comparison Functions,  Prev: High-Level Procedures,  Up: Sorting and Merging
-
-2.4.2 Low-Level Procedures
---------------------------
-
- -- Function: int rs_rainflow_sort_cycles (void *BUFFER, size_t COUNT,
+ -- Function: int rs_rainflow_sort_cycles (double *BUFFER, size_t COUNT,
           int (*COMPARE) (void const *, void const *))
 
- -- Function: int rs_rainflow_merge_cycles (void *BUFFER, size_t *COUNT,
-          int (*COMPARE) (void const *, void const *))
-
-
-File: rs-rainflow.info,  Node: Comparison Functions,  Prev: Low-Level Procedures,  Up: Sorting and Merging
-
-2.4.3 Comparison Functions
---------------------------
-
- -- Function: int rs_rainflow_compare_descending (void const *LEFT,
-          void const *RIGHT)
-     Compare two cycles in descending order.
-
-     Cycles are first compared by the signal amplitude.  If the signal
-     amplitude is equal, then the cycles are compared by the mean value.
-
-        * First argument LEFT is the address of a cycle.
-
-        * Second argument RIGHT is the address of a cycle.
+ -- Function: int rs_rainflow_merge_cycles (double *BUFFER,
+          size_t *COUNT, int (*COMPARE) (void const *, void const *))
 
  -- Function: int rs_rainflow_compare_ascending (void const *LEFT,
           void const *RIGHT)
@@ -658,10 +1029,252 @@ File: rs-rainflow.info,  Node: Comparison Functions,  Prev: Low-Level Procedures
 
         * Second argument RIGHT is the address of a cycle.
 
-
-File: rs-rainflow.info,  Node: Enumerated Constants,  Prev: Sorting and Merging,  Up: API Reference
+ -- Function: int rs_rainflow_compare_descending (void const *LEFT,
+          void const *RIGHT)
+     Compare two cycles in descending order.
 
-2.5 Enumerated Constants
+     Cycles are first compared by the signal amplitude.  If the signal
+     amplitude is equal, then the cycles are compared by the mean value.
+
+        * First argument LEFT is the address of a cycle.
+
+        * Second argument RIGHT is the address of a cycle.
+
+ -- Function: rs_rainflow_matrix_t * rs_rainflow_matrix_new (void)
+     Create a rainflow matrix object.
+
+     Return value is a pointer to a new rainflow matrix object.  In case
+     of an error, a null pointer is returned and 'errno' is set to
+     describe the error.
+
+ -- Function: void rs_rainflow_matrix_delete (rs_rainflow_matrix_t *OBJ)
+     Delete a rainflow matrix object.
+
+        * Argument OBJ is a pointer to a rainflow matrix object.  It is
+          no error if argument OBJ is a null pointer.
+
+     Deleting a rainflow matrix object means to unconditionally return
+     any allocated memory back to the system including the object
+     itself.  After that, all references to the rainflow matrix object
+     are void.
+
+ -- Function: int rs_rainflow_matrix_add (rs_rainflow_matrix_t *OBJ,
+          double const *CYCLE)
+     Add the cycle count of a cycle to the rainflow matrix.
+
+        * First argument OBJ is a pointer to a rainflow matrix object.
+
+        * Second argument CYCLE is a pointer to a cycle.
+
+     The cycle representation of CYCLE, i.e.  the first and second
+     element, should be discretised according to the desired bin edges
+     of the rainflow matrix.  Third element of CYCLE is the cycle count.
+
+     Return value is zero on success.  In case of an error, the return
+     value is -1 and 'errno' is set to describe the error.  The
+     following error conditions are defined for this function:
+
+     'EINVAL'
+          Argument OBJ or CYCLE is a null pointer.
+
+     'EDOM'
+          The first or second element of CYCLE is not-a-number.
+
+     'ERANGE'
+          The third element of CYCLE is not-a-number or less than zero.
+
+ -- Function: int rs_rainflow_matrix_add3 (rs_rainflow_matrix_t *OBJ,
+          double FIRST, double SECOND, double COUNT)
+     Add the cycle count of a cycle to the rainflow matrix.
+
+        * First argument OBJ is a pointer to a rainflow matrix object.
+
+        * Second argument FIRST is the index of the first dimension of
+          the rainflow matrix.  This is usually the first element of the
+          cycle representation.
+
+        * Third argument SECOND is the index of the second dimension of
+          the rainflow matrix.  This is usually the second element of
+          the cycle representation.
+
+        * Fourth argument COUNT is the cycle count.
+
+     Return value is zero on success.  In case of an error, the return
+     value is -1 and 'errno' is set to describe the error.  The
+     following error conditions are defined for this function:
+
+     'EINVAL'
+          Argument OBJ is a null pointer.
+
+     'EDOM'
+          Argument FIRST or SECOND is not-a-number.
+
+     'ERANGE'
+          Argument COUNT is not-a-number or less than zero.
+
+ -- Function: double rs_rainflow_matrix_get (rs_rainflow_matrix_t *OBJ,
+          double const *CYCLE)
+     Get the cycle count of a cycle from the rainflow matrix.
+
+        * First argument OBJ is a pointer to a rainflow matrix object.
+
+        * Second argument CYCLE is a pointer to a cycle.
+
+     The cycle representation of CYCLE, i.e.  the first and second
+     element, should be discretised according to the desired bin edges
+     of the rainflow matrix.
+
+     Return value is the cycle count.  In case of an error, the return
+     value is not-a-number and 'errno' is set to describe the error.
+     The following error conditions are defined for this function:
+
+     'EINVAL'
+          Argument OBJ or CYCLE is a null pointer.
+
+     'EDOM'
+          The first or second element of CYCLE is not-a-number.
+
+ -- Function: double rs_rainflow_matrix_get2 (rs_rainflow_matrix_t *OBJ,
+          double FIRST, double SECOND)
+     Get the cycle count of a cycle from the rainflow matrix.
+
+        * First argument OBJ is a pointer to a rainflow matrix object.
+
+        * Second argument FIRST is the index of the first dimension of
+          the rainflow matrix.  This is usually the first element of the
+          cycle representation.
+
+        * Third argument SECOND is the index of the second dimension of
+          the rainflow matrix.  This is usually the second element of
+          the cycle representation.
+
+     Return value is the cycle count.  In case of an error, the return
+     value is not-a-number and 'errno' is set to describe the error.
+     The following error conditions are defined for this function:
+
+     'EINVAL'
+          Argument OBJ is a null pointer.
+
+     'EDOM'
+          Argument FIRST or SECOND is not-a-number.
+
+ -- Function: int rs_rainflow_matrix_limits (rs_rainflow_matrix_t *OBJ,
+          int DIM, double *MIN, double *MAX)
+     Get the lower and upper bound of a rainflow matrix dimension.
+
+        * First argument OBJ is a pointer to a rainflow matrix object.
+
+        * Second argument DIM is the rainflow matrix dimension.  Value
+          is either zero, i.e.  the first dimension, or 1, i.e.  the
+          second dimension.
+
+        * Third argument MIN is the address where to store the value of
+          the lower bound.  No value will be stored if MIN is a null
+          pointer.
+
+        * Fourth argument MAX is the address where to store the value of
+          the upper bound.  No value will be stored if MAX is a null
+          pointer.
+
+     Return value is zero on success.  In case of an error, the return
+     value is -1 and 'errno' is set to describe the error.  The
+     following error conditions are defined for this function:
+
+     'EINVAL'
+          Argument OBJ is a null pointer.
+
+     'ERANGE'
+          The rainflow matrix is empty.
+
+ -- Function: size_t rs_rainflow_matrix_non_zero
+          (rs_rainflow_matrix_t *OBJ)
+     Return the number of non-zero elements of a rainflow matrix.
+
+        * Argument OBJ is a pointer to a rainflow matrix object.
+
+     Return value is zero on success.  In case of an error, the return
+     value is -1 and 'errno' is set to describe the error.  The
+     following error conditions are defined for this function:
+
+     'EINVAL'
+          Argument OBJ is a null pointer.
+
+ -- Function: void rs_rainflow_matrix_map (rs_rainflow_matrix_t *OBJ,
+          void (*FUN) (void *, double const *), void *ARG)
+     Apply a function on any non-zero element of a rainflow matrix.
+
+        * First argument OBJ is a pointer to a rainflow matrix object.
+
+        * Second argument FUN is the address of a function with two
+          arguments.
+
+             - First argument is the value of the ARG argument.
+
+             - Second argument is a pointer to the cycle.
+
+        * Third argument ARG is the first argument of the function FUN.
+
+     In case of an error, 'errno' is set to describe the error.  The
+     following error conditions are defined for this function:
+
+     'EINVAL'
+          Argument OBJ or FUN is a null pointer.
+
+ -- Function: void rs_rainflow_round_amplitude_mean (double *CYCLE,
+          double SCALE)
+ -- Function: void rs_rainflow_round_range_mean (double *CYCLE,
+          double SCALE)
+ -- Function: void rs_rainflow_round_from_to (double *CYCLE,
+          double SCALE)
+     Round the signal values of CYCLE to a multiple of SCALE.
+
+        * First argument CYCLE is the address of a cycle.
+
+        * Second argument SCALE is the rounding scale factor.  Value has
+          to be a positive number.
+
+     The cycle representation of CYCLE is modified in-place.
+
+     'rs_rainflow_round_amplitude_mean'
+          Round an amplitude/mean cycle representation.
+
+     'rs_rainflow_round_range_mean'
+          Round a range/mean cycle representation.
+
+     'rs_rainflow_round_from_to'
+          Round a from/to cycle representation.
+
+ -- Function: double rs_rainflow_round_up (double NUMBER, double SCALE)
+ -- Function: double rs_rainflow_round_down (double NUMBER,
+          double SCALE)
+ -- Function: double rs_rainflow_round_zero (double NUMBER,
+          double SCALE)
+ -- Function: double rs_rainflow_round_inf (double NUMBER, double SCALE)
+     Round NUMBER to a multiple of SCALE.
+
+        * First argument NUMBER is a number.
+
+        * Second argument SCALE is the rounding scale factor.  Value has
+          to be a positive number.
+
+     Return value is the rounded number.
+
+     'rs_rainflow_round_up'
+          Round towards plus infinity.
+
+     'rs_rainflow_round_down'
+          Round towards minus infinity.
+
+     'rs_rainflow_round_zero'
+          Round towards zero (away from infinity).
+
+     'rs_rainflow_round_inf'
+          Round away from zero (towards infinity).
+
+
+File: rs-rainflow.info,  Node: Enumerated Constants,  Prev: Functions,  Up: API Reference
+
+3.3 Enumerated Constants
 ========================
 
 * Menu:
@@ -672,7 +1285,7 @@ File: rs-rainflow.info,  Node: Enumerated Constants,  Prev: Sorting and Merging,
 
 File: rs-rainflow.info,  Node: Array Element Types,  Next: Extended Error Codes,  Prev: Enumerated Constants,  Up: Enumerated Constants
 
-2.5.1 Array Element Types
+3.3.1 Array Element Types
 -------------------------
 
  -- Constant: int RS_RAINFLOW_TYPE_UNKNOWN
@@ -702,7 +1315,7 @@ File: rs-rainflow.info,  Node: Array Element Types,  Next: Extended Error Codes,
 
 File: rs-rainflow.info,  Node: Extended Error Codes,  Prev: Array Element Types,  Up: Enumerated Constants
 
-2.5.2 Extended Error Codes
+3.3.2 Extended Error Codes
 --------------------------
 
  -- Constant: int RS_RAINFLOW_ERROR_STACK_OVERFLOW
@@ -714,7 +1327,7 @@ File: rs-rainflow.info,  Node: Extended Error Codes,  Prev: Array Element Types,
 
 File: rs-rainflow.info,  Node: Examples,  Next: Symbol Index,  Prev: API Reference,  Up: Top
 
-3 Examples
+4 Examples
 **********
 
 The source code archive contains several examples for how to use the
@@ -730,7 +1343,7 @@ The source code archive contains several examples for how to use the
 
 File: rs-rainflow.info,  Node: Basic Example,  Next: Using Call-back Functions,  Prev: Examples,  Up: Examples
 
-3.1 Basic Example
+4.1 Basic Example
 =================
 
 The first example shows a naive usage of the 'rs-rainflow' library.
@@ -783,7 +1396,7 @@ The first example shows a naive usage of the 'rs-rainflow' library.
 
 File: rs-rainflow.info,  Node: Using Call-back Functions,  Next: Reservoir Cycle Counting,  Prev: Basic Example,  Up: Examples
 
-3.2 Using Call-back Functions
+4.2 Using Call-back Functions
 =============================
 
 This program does the same as the previous example, but much more memory
@@ -824,7 +1437,7 @@ efficient.
 
 File: rs-rainflow.info,  Node: Reservoir Cycle Counting,  Next: Auxiliary Procedures,  Prev: Using Call-back Functions,  Up: Examples
 
-3.3 Reservoir Cycle Counting
+4.3 Reservoir Cycle Counting
 ============================
 
 This example shows how to implement reservoir cycle counting on top of
@@ -852,7 +1465,7 @@ the global maximum.
              k = j;
          }
 
-       /* Rearrange the cycle counting history so that it starts and ends
+       /* Rearrange the signal history so that it starts and ends
           with the global maximum.  */
        if (rs_rainflow (obj, sig_buf + k, sig_len - k, RS_RAINFLOW_CONTINUE) != 0)
          abort ();
@@ -864,7 +1477,7 @@ the global maximum.
 
 File: rs-rainflow.info,  Node: Auxiliary Procedures,  Prev: Reservoir Cycle Counting,  Up: Examples
 
-3.4 Auxiliary Procedures
+4.4 Auxiliary Procedures
 ========================
 
 Here are three auxiliary procedures for the examples.  The first
@@ -889,14 +1502,8 @@ The next function prints a single cycle to a stream.
      void
      print_cycle (FILE *stream, double const *cycle)
      {
-       double ampl, mean, count;
-
-       ampl = cycle[0];
-       mean = cycle[1];
-       count = cycle[2];
-
        /* Print cycle count as the number of full cycles.  */
-       fprintf (stream, "%.5G;%.5G;%.5G\n", ampl, mean, count / 2.0);
+       fprintf (stream, "%.5G;%.5G;%.5G\n", cycle[0], cycle[1], cycle[2] / 2.0);
      }
 
 The last function prints the whole cycle counting sequence of a
@@ -905,7 +1512,7 @@ The last function prints the whole cycle counting sequence of a
      void
      print_cycles (FILE *stream, rs_rainflow_t *obj)
      {
-       double cycle[3];
+       double cycle[5];
        size_t n;
 
        for (n = rs_rainflow_cycles (obj); n > 0; --n)
@@ -925,37 +1532,53 @@ Symbol Index
  [index ]
 * Menu:
 
-* rs_rainflow:                           Execution.           (line  53)
-* rs_rainflow_alloc:                     Instantiation.       (line  39)
-* rs_rainflow_capture:                   Execution.           (line 171)
-* rs_rainflow_compare_ascending:         Comparison Functions.
-                                                              (line  17)
-* rs_rainflow_compare_descending:        Comparison Functions.
-                                                              (line   6)
-* RS_RAINFLOW_CONTINUE:                  Execution.           (line  68)
-* rs_rainflow_cycles:                    Execution.           (line  99)
-* rs_rainflow_delete:                    Instantiation.       (line  22)
+* rs_rainflow:                           Functions.           (line  77)
+* rs_rainflow_alloc:                     Functions.           (line  13)
+* rs_rainflow_capture:                   Functions.           (line 187)
+* rs_rainflow_compare_ascending:         Functions.           (line 485)
+* rs_rainflow_compare_descending:        Functions.           (line 496)
+* RS_RAINFLOW_CONTINUE:                  Functions.           (line  92)
+* rs_rainflow_cycles:                    Functions.           (line 148)
+* rs_rainflow_delete:                    Functions.           (line  48)
 * RS_RAINFLOW_ERROR_CYCLE_OVERFLOW:      Extended Error Codes.
                                                               (line   9)
 * RS_RAINFLOW_ERROR_STACK_OVERFLOW:      Extended Error Codes.
                                                               (line   6)
-* RS_RAINFLOW_FINISH:                    Execution.           (line  68)
-* rs_rainflow_finish:                    Execution.           (line 141)
-* rs_rainflow_merge_cycles:              Low-Level Procedures.
-                                                              (line   9)
-* rs_rainflow_new:                       Instantiation.       (line  15)
-* rs_rainflow_reset:                     Instantiation.       (line  81)
-* rs_rainflow_set_length:                Customization.       (line 143)
-* rs_rainflow_set_merge_cycles:          Customization.       (line 171)
-* rs_rainflow_set_read_signals:          Customization.       (line  53)
-* rs_rainflow_set_shift_cycle:           Customization.       (line 103)
-* rs_rainflow_set_signal_type:           Customization.       (line  16)
-* rs_rainflow_shift:                     Execution.           (line 112)
-* rs_rainflow_sort:                      High-Level Procedures.
-                                                              (line   6)
-* rs_rainflow_sort_cycles:               Low-Level Procedures.
-                                                              (line   6)
-* rs_rainflow_t:                         Instantiation.       (line   9)
+* RS_RAINFLOW_FINISH:                    Functions.           (line  92)
+* rs_rainflow_finish:                    Functions.           (line 123)
+* rs_rainflow_matrix_add:                Functions.           (line 525)
+* rs_rainflow_matrix_add3:               Functions.           (line 550)
+* rs_rainflow_matrix_delete:             Functions.           (line 514)
+* rs_rainflow_matrix_get:                Functions.           (line 579)
+* rs_rainflow_matrix_get2:               Functions.           (line 601)
+* rs_rainflow_matrix_limits:             Functions.           (line 626)
+* rs_rainflow_matrix_map:                Functions.           (line 668)
+* rs_rainflow_matrix_new:                Functions.           (line 507)
+* rs_rainflow_matrix_non_zero:           Functions.           (line 654)
+* rs_rainflow_matrix_t:                  Data Types.          (line  12)
+* rs_rainflow_merge_cycles:              Functions.           (line 481)
+* rs_rainflow_new:                       Functions.           (line   6)
+* rs_rainflow_reset:                     Functions.           (line  59)
+* rs_rainflow_round_amplitude_mean:      Functions.           (line 689)
+* rs_rainflow_round_down:                Functions.           (line 716)
+* rs_rainflow_round_from_to:             Functions.           (line 694)
+* rs_rainflow_round_inf:                 Functions.           (line 720)
+* rs_rainflow_round_range_mean:          Functions.           (line 691)
+* rs_rainflow_round_up:                  Functions.           (line 715)
+* rs_rainflow_round_zero:                Functions.           (line 718)
+* rs_rainflow_set_cycle_sign:            Functions.           (line 436)
+* rs_rainflow_set_cycle_style:           Functions.           (line 417)
+* rs_rainflow_set_length:                Functions.           (line 210)
+* rs_rainflow_set_merge_cycles:          Functions.           (line 391)
+* rs_rainflow_set_read_signals:          Functions.           (line 275)
+* rs_rainflow_set_shift_cycle:           Functions.           (line 325)
+* rs_rainflow_set_signal_index:          Functions.           (line 387)
+* rs_rainflow_set_signal_label:          Functions.           (line 359)
+* rs_rainflow_set_signal_type:           Functions.           (line 238)
+* rs_rainflow_shift:                     Functions.           (line 161)
+* rs_rainflow_sort:                      Functions.           (line 453)
+* rs_rainflow_sort_cycles:               Functions.           (line 477)
+* rs_rainflow_t:                         Data Types.          (line   6)
 * RS_RAINFLOW_TYPE_CHAR:                 Array Element Types. (line   9)
 * RS_RAINFLOW_TYPE_DOUBLE:               Array Element Types. (line   7)
 * RS_RAINFLOW_TYPE_FLOAT:                Array Element Types. (line   8)
@@ -985,48 +1608,48 @@ Concept Index
  [index ]
 * Menu:
 
-* allocation, memory:                    Instantiation.       (line  39)
-* alternative memory manager:            Instantiation.       (line  39)
-* amplitude, signal:                     Introduction.        (line   6)
-* capture cycle counting sequence:       Execution.           (line 171)
-* constructor:                           Instantiation.       (line  15)
-* context:                               Instantiation.       (line   9)
-* creating an object:                    Instantiation.       (line  15)
-* cycle count:                           Introduction.        (line   6)
-* cycle counting sequence, capture:      Execution.           (line 171)
-* cycle counting sequence, length:       Execution.           (line  99)
-* cycle counting, finish:                Execution.           (line 141)
-* cycle counting, rainflow:              Execution.           (line  53)
+* allocation, memory:                    Instantiation.        (line 17)
+* alternative memory manager:            Instantiation.        (line 17)
+* amplitude, signal:                     Introduction.         (line  6)
+* capture cycle counting sequence:       Execution.            (line 27)
+* constructor:                           Instantiation.        (line  6)
+* context:                               Instantiation.        (line 10)
+* creating an object:                    Instantiation.        (line  6)
+* cycle count:                           Introduction.         (line  6)
+* cycle counting sequence, capture:      Execution.            (line 27)
+* cycle counting sequence, length:       Execution.            (line 13)
+* cycle counting, finish:                Execution.            (line 18)
+* cycle counting, rainflow:              Execution.            (line  6)
 * cycle counting, reservoir:             Reservoir Cycle Counting.
-                                                              (line   6)
-* cycle, mean value:                     Introduction.        (line   6)
-* cycle, shift:                          Execution.           (line 112)
-* data type:                             Instantiation.       (line   9)
-* deleting an object:                    Instantiation.       (line  22)
-* destroying an object:                  Instantiation.       (line  22)
-* destructor:                            Instantiation.       (line  22)
-* finish cycle counting:                 Execution.           (line 141)
-* instantiating an object:               Instantiation.       (line  15)
-* length of cycle counting sequence:     Execution.           (line  99)
-* mean signal value:                     Introduction.        (line   6)
-* memory allocation:                     Instantiation.       (line  39)
-* memory manager, alternative:           Instantiation.       (line  39)
-* object:                                Instantiation.       (line   9)
-* object creation:                       Instantiation.       (line  15)
-* object deletion:                       Instantiation.       (line  22)
-* object reuse:                          Instantiation.       (line  81)
-* peak signal value:                     Introduction.        (line   6)
-* rainflow cycle counting:               Execution.           (line  53)
+                                                               (line  6)
+* cycle, mean value:                     Introduction.         (line  6)
+* cycle, shift:                          Execution.            (line 14)
+* data type:                             Instantiation.        (line 10)
+* deleting an object:                    Instantiation.        (line 24)
+* destroying an object:                  Instantiation.        (line 24)
+* destructor:                            Instantiation.        (line 24)
+* finish cycle counting:                 Execution.            (line 18)
+* instantiating an object:               Instantiation.        (line  6)
+* length of cycle counting sequence:     Execution.            (line 13)
+* mean signal value:                     Introduction.         (line  6)
+* memory allocation:                     Instantiation.        (line 17)
+* memory manager, alternative:           Instantiation.        (line 17)
+* object:                                Instantiation.        (line 10)
+* object creation:                       Instantiation.        (line  6)
+* object deletion:                       Instantiation.        (line 24)
+* object reuse:                          Instantiation.        (line 27)
+* peak signal value:                     Introduction.         (line  6)
+* rainflow cycle counting:               Execution.            (line  6)
 * reservoir cycle counting:              Reservoir Cycle Counting.
-                                                              (line   6)
-* reusing an object:                     Instantiation.       (line  81)
-* shift cycle:                           Execution.           (line 112)
-* signal amplitude:                      Introduction.        (line   6)
-* signal value, peak:                    Introduction.        (line   6)
-* signal value, trough:                  Introduction.        (line   6)
-* state:                                 Instantiation.       (line   9)
-* terminate cycle counting:              Execution.           (line 141)
-* trough signal value:                   Introduction.        (line   6)
+                                                               (line  6)
+* reusing an object:                     Instantiation.        (line 27)
+* shift cycle:                           Execution.            (line 14)
+* signal amplitude:                      Introduction.         (line  6)
+* signal value, peak:                    Introduction.         (line  6)
+* signal value, trough:                  Introduction.         (line  6)
+* state:                                 Instantiation.        (line 10)
+* terminate cycle counting:              Execution.            (line 18)
+* trough signal value:                   Introduction.         (line  6)
 
 
 File: rs-rainflow.info,  Node: References,  Prev: Concept Index,  Up: Top
@@ -1042,50 +1665,105 @@ References
 
 Tag Table:
 Node: Top491
-Node: Introduction1017
-Node: API Reference2041
-Ref: API Reference-Footnote-13111
-Node: Instantiation3140
-Ref: rs_rainflow_t3376
-Ref: rs_rainflow_new3567
-Ref: rs_rainflow_delete3840
-Ref: rs_rainflow_alloc4588
-Ref: rs_rainflow_reset6571
-Node: Execution7248
-Ref: rs_rainflow9254
-Ref: RS_RAINFLOW_CONTINUE9806
-Ref: RS_RAINFLOW_FINISH9806
-Ref: rs_rainflow_cycles10900
-Ref: rs_rainflow_shift11385
-Ref: rs_rainflow_finish12424
-Ref: rs_rainflow_capture13473
-Node: Customization14413
-Ref: rs_rainflow_set_signal_type14894
-Ref: rs_rainflow_set_read_signals16247
-Ref: rs_rainflow_set_shift_cycle18203
-Ref: rs_rainflow_set_length19518
-Ref: rs_rainflow_set_merge_cycles20515
-Node: Sorting and Merging21415
-Node: High-Level Procedures21959
-Ref: rs_rainflow_sort22155
-Node: Low-Level Procedures23029
-Ref: rs_rainflow_sort_cycles23224
-Ref: rs_rainflow_merge_cycles23351
-Node: Comparison Functions23480
-Ref: rs_rainflow_compare_descending23645
-Ref: rs_rainflow_compare_ascending24051
-Node: Enumerated Constants24455
-Node: Array Element Types24668
-Node: Extended Error Codes25864
-Ref: RS_RAINFLOW_ERROR_STACK_OVERFLOW26029
-Ref: RS_RAINFLOW_ERROR_CYCLE_OVERFLOW26124
-Node: Examples26232
-Node: Basic Example26556
-Node: Using Call-back Functions27757
-Node: Reservoir Cycle Counting28979
-Node: Auxiliary Procedures30325
-Node: Symbol Index31669
-Node: Concept Index35395
-Node: References38598
+Node: Introduction1034
+Node: User's Guide2069
+Ref: User's Guide-Footnote-13681
+Node: Instantiation3710
+Node: Execution4883
+Node: Customisation6225
+Node: Signal History7120
+Ref: Array of Numbers7391
+Ref: User-defined Call-back Function7960
+Node: Signal Labels8263
+Ref: Implicit Signal Labels9304
+Ref: Explicit Signal Labels9951
+Node: Cycle Representation11278
+Ref: Amplitude/Mean Cycle Representation12121
+Ref: Range/Mean Cycle Representation12974
+Ref: From/To Cycle Representation13341
+Ref: Cycle Representation-Footnote-113605
+Node: Merging Cycles13746
+Node: Consuming Cycles14597
+Node: Sorting Cycles15716
+Node: Rainflow Matrix17171
+Node: API Reference19403
+Node: Data Types19683
+Ref: rs_rainflow_t19819
+Ref: rs_rainflow_matrix_t20010
+Node: Functions20192
+Ref: rs_rainflow_new20333
+Ref: rs_rainflow_alloc20606
+Ref: rs_rainflow_delete22248
+Ref: rs_rainflow_reset22728
+Ref: rs_rainflow23405
+Ref: RS_RAINFLOW_CONTINUE23957
+Ref: RS_RAINFLOW_FINISH23957
+Ref: rs_rainflow_finish25051
+Ref: rs_rainflow_cycles25871
+Ref: rs_rainflow_shift26356
+Ref: rs_rainflow_capture27231
+Ref: rs_rainflow_set_length28173
+Ref: rs_rainflow_set_signal_type29170
+Ref: rs_rainflow_set_read_signals30523
+Ref: rs_rainflow_set_shift_cycle32479
+Ref: rs_rainflow_set_signal_label33593
+Ref: rs_rainflow_set_signal_index34689
+Ref: rs_rainflow_set_merge_cycles34802
+Ref: rs_rainflow_set_cycle_style35702
+Ref: rs_rainflow_set_cycle_sign36258
+Ref: rs_rainflow_sort36759
+Ref: rs_rainflow_sort_cycles37633
+Ref: rs_rainflow_merge_cycles37762
+Ref: Comparison Functions37893
+Ref: rs_rainflow_compare_ascending37893
+Ref: rs_rainflow_compare_descending38297
+Ref: rs_rainflow_matrix_new38703
+Ref: rs_rainflow_matrix_delete38975
+Ref: rs_rainflow_matrix_add39438
+Ref: rs_rainflow_matrix_add340370
+Ref: rs_rainflow_matrix_get41431
+Ref: rs_rainflow_matrix_get242246
+Ref: rs_rainflow_matrix_limits43179
+Ref: rs_rainflow_matrix_non_zero44239
+Ref: rs_rainflow_matrix_map44715
+Ref: rs_rainflow_round_amplitude_mean45469
+Ref: rs_rainflow_round_range_mean45469
+Ref: rs_rainflow_round_from_to45469
+Ref: rs_rainflow_round_up46294
+Ref: rs_rainflow_round_down46294
+Ref: rs_rainflow_round_zero46294
+Ref: rs_rainflow_round_inf46294
+Node: Enumerated Constants47149
+Node: Array Element Types47352
+Ref: RS_RAINFLOW_TYPE_UNKNOWN47544
+Ref: RS_RAINFLOW_TYPE_DOUBLE47544
+Ref: RS_RAINFLOW_TYPE_FLOAT47544
+Ref: RS_RAINFLOW_TYPE_CHAR47544
+Ref: RS_RAINFLOW_TYPE_UCHAR47544
+Ref: RS_RAINFLOW_TYPE_SHORT47544
+Ref: RS_RAINFLOW_TYPE_USHORT47544
+Ref: RS_RAINFLOW_TYPE_INT47544
+Ref: RS_RAINFLOW_TYPE_UINT47544
+Ref: RS_RAINFLOW_TYPE_LONG47544
+Ref: RS_RAINFLOW_TYPE_ULONG47544
+Ref: RS_RAINFLOW_TYPE_INT8_T47544
+Ref: RS_RAINFLOW_TYPE_UINT8_T47544
+Ref: RS_RAINFLOW_TYPE_INT16_T47544
+Ref: RS_RAINFLOW_TYPE_UINT16_T47544
+Ref: RS_RAINFLOW_TYPE_INT32_T47544
+Ref: RS_RAINFLOW_TYPE_UINT32_T47544
+Ref: RS_RAINFLOW_TYPE_INT64_T47544
+Ref: RS_RAINFLOW_TYPE_UINT64_T47544
+Node: Extended Error Codes48548
+Ref: RS_RAINFLOW_ERROR_STACK_OVERFLOW48713
+Ref: RS_RAINFLOW_ERROR_CYCLE_OVERFLOW48808
+Node: Examples48916
+Node: Basic Example49240
+Node: Using Call-back Functions50441
+Node: Reservoir Cycle Counting51663
+Node: Auxiliary Procedures53001
+Node: Symbol Index54248
+Node: Concept Index59191
+Node: References62394
 
 End Tag Table
