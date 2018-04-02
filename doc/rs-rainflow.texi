@@ -619,8 +619,8 @@ into a two-dimensional array and the cycle count is the corresponding
 matrix element.
 
 You can create and destroy a rainflow matrix by calling the
-@syref{rs_rainflow_matrix_new} function and
-@syref{rs_rainflow_matrix_delete} respectively.
+@syref{rs_rainflow_matrix_new} and @syref{rs_rainflow_matrix_delete}
+function respectively.
 
 Cycles are added to the rainflow matrix by calling the
 @syref{rs_rainflow_matrix_add} or @syref{rs_rainflow_matrix_add3}
