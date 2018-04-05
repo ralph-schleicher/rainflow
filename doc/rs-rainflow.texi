@@ -13,6 +13,8 @@
 @iftex
 @finalout
 @paragraphindent 1
+@c @afourpaper
+@c @afourlatex
 @end iftex
 
 @setchapternewpage on
@@ -387,9 +389,20 @@ explicit signal labels.
 @subsubsection Implicit Signal Labels
 
 Implicit signal labels are automatically assigned to a signal value by
-the @syref{rs_rainflow} function.  The signal label is an integer which
-is incremented after each signal value.  Thus, the signal label is like
-a linear index into the signal history.  The start index, i.e. the
+the @syref{rs_rainflow} function.  The signal label is an
+integer@footnote{The maximum integer that you can store as a double
+precision floating-point number without loss of precision is usually
+@math{2^{53}}.  With that you can record a signal at octuple-rate DSD,
+i.e. 22579.2 kHz, for 4617 days or 12.6 years before you run out of
+signal labels.}
+@c                       |             |     Days    |    Years
+@c ----------------------+-------------+-------------+-------------
+@c  Audio CD             |    44.1 kHz |  2363945.4  |   6476.5
+@c  Super Audio CD       |   352.8 kHz |   295493.1  |    809.5
+@c  Super Audio CD (DSD) |  2822.4 kHz |    36936.6  |    101.1
+@c  Octuple-Rate DSD     | 22579.2 kHz |     4617.0  |     12.6
+which is incremented after each signal value.  Thus, the signal label is
+like a linear index into the signal history.  The start index, i.e. the
 signal label of the first signal value, can be set via the
 @syref{rs_rainflow_set_signal_index} function.  The default start index
 is zero.
