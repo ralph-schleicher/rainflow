@@ -668,7 +668,7 @@ shift_cycle (rs_rainflow_matrix_t *mat, double const *cycle)
   double tem[3];
 
   memcpy (tem, cycle, 3 * sizeof (double));
-  /* @r{Signal values are binned to a multiple or 20 MPa.  Thus, the signal}
+  /* @r{Signal values are binned to a multiple of 20 MPa.  Thus, the signal}
      @r{amplitude and signal mean are both binned to 10 MPa.}  */
   rs_rainflow_round_amplitude_mean (tem, 20.0);
   rs_rainflow_matrix_add (mat, tem);
