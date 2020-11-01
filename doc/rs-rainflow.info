@@ -1,4 +1,4 @@
-This is rs-rainflow.info, produced by makeinfo version 6.5 from
+This is rs-rainflow.info, produced by makeinfo version 6.7 from
 rs-rainflow.texi.
 
 This is the reference manual for the 'rs-rainflow' library version
@@ -48,8 +48,8 @@ File: rs-rainflow.info,  Node: Introduction,  Next: User's Guide,  Prev: Top,  U
 Rainflow cycle counting is a widely accepted method for transforming a
 sequence of signal values into an equivalent sequence of cycles.  Each
 cycle is a tuple with three values.  The first value is the signal
-amplitude s^, i.e.  half the distance between the trough and peak signal
-value.  The second value is the mean value s=, i.e.  the arithmetic mean
+amplitude ŝ, i.e.  half the distance between the trough and peak signal
+value.  The second value is the mean value s̄, i.e.  the arithmetic mean
 of the trough and peak signal value.  The third value is the cycle count
 n, i.e.  the number of alterations between the trough and peak signal
 value.  The cycle count can be expressed as the number of full cycles or
@@ -264,7 +264,7 @@ explicit signal labels.
 ..............................
 
 Implicit signal labels are automatically assigned to a signal value by
-the 'rs_rainflow' function.  The signal label is an integer which is
+the 'rs_rainflow' function.  The signal label is an integer(1) which is
 incremented after each signal value.  Thus, the signal label is like a
 linear index into the signal history.  The start index, i.e.  the signal
 label of the first signal value, can be set via the
@@ -319,6 +319,13 @@ To play save, you should check at the beginning of your program if
 problem if the inverse is true since argument BUFFER is initialised with
 zeros.  See the 'rs_rainflow_set_read_signals' function for more details
 about the calling conventions.
+
+   ---------- Footnotes ----------
+
+   (1) The maximum integer that you can store as a double precision
+floating-point number without loss of precision is usually 2^{53}.  With
+that you can record a signal at octuple-rate DSD, i.e.  22579.2 kHz, for
+4617 days or 12.6 years before you run out of signal labels.
 
 
 File: rs-rainflow.info,  Node: Cycle Representation,  Next: Merging Cycles,  Prev: Signal Labels,  Up: Customisation
@@ -480,7 +487,7 @@ into a two-dimensional array and the cycle count is the corresponding
 matrix element.
 
 You can create and destroy a rainflow matrix by calling the
-'rs_rainflow_matrix_new' function and 'rs_rainflow_matrix_delete'
+'rs_rainflow_matrix_new' and 'rs_rainflow_matrix_delete' function
 respectively.
 
 Cycles are added to the rainflow matrix by calling the
@@ -1666,104 +1673,110 @@ References
 Tag Table:
 Node: Top491
 Node: Introduction1034
-Node: User's Guide2069
-Ref: User's Guide-Footnote-13681
-Node: Instantiation3710
-Node: Execution4883
-Node: Customisation6225
-Node: Signal History7120
-Ref: Array of Numbers7391
-Ref: User-defined Call-back Function7960
-Node: Signal Labels8263
-Ref: Implicit Signal Labels9304
-Ref: Explicit Signal Labels9951
-Node: Cycle Representation11278
-Ref: Amplitude/Mean Cycle Representation12121
-Ref: Range/Mean Cycle Representation12974
-Ref: From/To Cycle Representation13341
-Ref: Cycle Representation-Footnote-113605
-Node: Merging Cycles13746
-Node: Consuming Cycles14597
-Node: Sorting Cycles15716
-Node: Rainflow Matrix17171
-Node: API Reference19403
-Node: Data Types19683
-Ref: rs_rainflow_t19819
-Ref: rs_rainflow_matrix_t20010
-Node: Functions20192
-Ref: rs_rainflow_new20333
-Ref: rs_rainflow_alloc20606
-Ref: rs_rainflow_delete22248
-Ref: rs_rainflow_reset22728
-Ref: rs_rainflow23405
-Ref: RS_RAINFLOW_CONTINUE23957
-Ref: RS_RAINFLOW_FINISH23957
-Ref: rs_rainflow_finish25051
-Ref: rs_rainflow_cycles25871
-Ref: rs_rainflow_shift26356
-Ref: rs_rainflow_capture27231
-Ref: rs_rainflow_set_length28173
-Ref: rs_rainflow_set_signal_type29170
-Ref: rs_rainflow_set_read_signals30523
-Ref: rs_rainflow_set_shift_cycle32479
-Ref: rs_rainflow_set_signal_label33593
-Ref: rs_rainflow_set_signal_index34689
-Ref: rs_rainflow_set_merge_cycles34802
-Ref: rs_rainflow_set_cycle_style35702
-Ref: rs_rainflow_set_cycle_sign36258
-Ref: rs_rainflow_sort36759
-Ref: rs_rainflow_sort_cycles37633
-Ref: rs_rainflow_merge_cycles37762
-Ref: Comparison Functions37893
-Ref: rs_rainflow_compare_ascending37893
-Ref: rs_rainflow_compare_descending38297
-Ref: rs_rainflow_matrix_new38703
-Ref: rs_rainflow_matrix_delete38975
-Ref: rs_rainflow_matrix_add39438
-Ref: rs_rainflow_matrix_add340370
-Ref: rs_rainflow_matrix_get41431
-Ref: rs_rainflow_matrix_get242246
-Ref: rs_rainflow_matrix_limits43179
-Ref: rs_rainflow_matrix_non_zero44239
-Ref: rs_rainflow_matrix_map44715
-Ref: rs_rainflow_round_amplitude_mean45469
-Ref: rs_rainflow_round_range_mean45469
-Ref: rs_rainflow_round_from_to45469
-Ref: rs_rainflow_round_up46294
-Ref: rs_rainflow_round_down46294
-Ref: rs_rainflow_round_zero46294
-Ref: rs_rainflow_round_inf46294
-Node: Enumerated Constants47149
-Node: Array Element Types47352
-Ref: RS_RAINFLOW_TYPE_UNKNOWN47544
-Ref: RS_RAINFLOW_TYPE_DOUBLE47544
-Ref: RS_RAINFLOW_TYPE_FLOAT47544
-Ref: RS_RAINFLOW_TYPE_CHAR47544
-Ref: RS_RAINFLOW_TYPE_UCHAR47544
-Ref: RS_RAINFLOW_TYPE_SHORT47544
-Ref: RS_RAINFLOW_TYPE_USHORT47544
-Ref: RS_RAINFLOW_TYPE_INT47544
-Ref: RS_RAINFLOW_TYPE_UINT47544
-Ref: RS_RAINFLOW_TYPE_LONG47544
-Ref: RS_RAINFLOW_TYPE_ULONG47544
-Ref: RS_RAINFLOW_TYPE_INT8_T47544
-Ref: RS_RAINFLOW_TYPE_UINT8_T47544
-Ref: RS_RAINFLOW_TYPE_INT16_T47544
-Ref: RS_RAINFLOW_TYPE_UINT16_T47544
-Ref: RS_RAINFLOW_TYPE_INT32_T47544
-Ref: RS_RAINFLOW_TYPE_UINT32_T47544
-Ref: RS_RAINFLOW_TYPE_INT64_T47544
-Ref: RS_RAINFLOW_TYPE_UINT64_T47544
-Node: Extended Error Codes48548
-Ref: RS_RAINFLOW_ERROR_STACK_OVERFLOW48713
-Ref: RS_RAINFLOW_ERROR_CYCLE_OVERFLOW48808
-Node: Examples48916
-Node: Basic Example49240
-Node: Using Call-back Functions50441
-Node: Reservoir Cycle Counting51663
-Node: Auxiliary Procedures53001
-Node: Symbol Index54248
-Node: Concept Index59191
-Node: References62394
+Node: User's Guide2070
+Ref: User's Guide-Footnote-13682
+Node: Instantiation3711
+Node: Execution4884
+Node: Customisation6226
+Node: Signal History7121
+Ref: Array of Numbers7392
+Ref: User-defined Call-back Function7961
+Node: Signal Labels8264
+Ref: Implicit Signal Labels9305
+Ref: Explicit Signal Labels9955
+Ref: Signal Labels-Footnote-111318
+Node: Cycle Representation11594
+Ref: Amplitude/Mean Cycle Representation12437
+Ref: Range/Mean Cycle Representation13290
+Ref: From/To Cycle Representation13657
+Ref: Cycle Representation-Footnote-113921
+Node: Merging Cycles14062
+Node: Consuming Cycles14913
+Node: Sorting Cycles16032
+Node: Rainflow Matrix17487
+Node: API Reference19719
+Node: Data Types19999
+Ref: rs_rainflow_t20135
+Ref: rs_rainflow_matrix_t20326
+Node: Functions20508
+Ref: rs_rainflow_new20649
+Ref: rs_rainflow_alloc20922
+Ref: rs_rainflow_delete22564
+Ref: rs_rainflow_reset23044
+Ref: rs_rainflow23721
+Ref: RS_RAINFLOW_CONTINUE24273
+Ref: RS_RAINFLOW_FINISH24273
+Ref: rs_rainflow_finish25367
+Ref: rs_rainflow_cycles26187
+Ref: rs_rainflow_shift26672
+Ref: rs_rainflow_capture27547
+Ref: rs_rainflow_set_length28489
+Ref: rs_rainflow_set_signal_type29486
+Ref: rs_rainflow_set_read_signals30839
+Ref: rs_rainflow_set_shift_cycle32795
+Ref: rs_rainflow_set_signal_label33909
+Ref: rs_rainflow_set_signal_index35005
+Ref: rs_rainflow_set_merge_cycles35118
+Ref: rs_rainflow_set_cycle_style36018
+Ref: rs_rainflow_set_cycle_sign36574
+Ref: rs_rainflow_sort37075
+Ref: rs_rainflow_sort_cycles37949
+Ref: rs_rainflow_merge_cycles38078
+Ref: Comparison Functions38209
+Ref: rs_rainflow_compare_ascending38209
+Ref: rs_rainflow_compare_descending38613
+Ref: rs_rainflow_matrix_new39019
+Ref: rs_rainflow_matrix_delete39291
+Ref: rs_rainflow_matrix_add39754
+Ref: rs_rainflow_matrix_add340686
+Ref: rs_rainflow_matrix_get41747
+Ref: rs_rainflow_matrix_get242562
+Ref: rs_rainflow_matrix_limits43495
+Ref: rs_rainflow_matrix_non_zero44555
+Ref: rs_rainflow_matrix_map45031
+Ref: rs_rainflow_round_amplitude_mean45785
+Ref: rs_rainflow_round_range_mean45785
+Ref: rs_rainflow_round_from_to45785
+Ref: rs_rainflow_round_up46610
+Ref: rs_rainflow_round_down46610
+Ref: rs_rainflow_round_zero46610
+Ref: rs_rainflow_round_inf46610
+Node: Enumerated Constants47465
+Node: Array Element Types47668
+Ref: RS_RAINFLOW_TYPE_UNKNOWN47860
+Ref: RS_RAINFLOW_TYPE_DOUBLE47860
+Ref: RS_RAINFLOW_TYPE_FLOAT47860
+Ref: RS_RAINFLOW_TYPE_CHAR47860
+Ref: RS_RAINFLOW_TYPE_UCHAR47860
+Ref: RS_RAINFLOW_TYPE_SHORT47860
+Ref: RS_RAINFLOW_TYPE_USHORT47860
+Ref: RS_RAINFLOW_TYPE_INT47860
+Ref: RS_RAINFLOW_TYPE_UINT47860
+Ref: RS_RAINFLOW_TYPE_LONG47860
+Ref: RS_RAINFLOW_TYPE_ULONG47860
+Ref: RS_RAINFLOW_TYPE_INT8_T47860
+Ref: RS_RAINFLOW_TYPE_UINT8_T47860
+Ref: RS_RAINFLOW_TYPE_INT16_T47860
+Ref: RS_RAINFLOW_TYPE_UINT16_T47860
+Ref: RS_RAINFLOW_TYPE_INT32_T47860
+Ref: RS_RAINFLOW_TYPE_UINT32_T47860
+Ref: RS_RAINFLOW_TYPE_INT64_T47860
+Ref: RS_RAINFLOW_TYPE_UINT64_T47860
+Node: Extended Error Codes48864
+Ref: RS_RAINFLOW_ERROR_STACK_OVERFLOW49029
+Ref: RS_RAINFLOW_ERROR_CYCLE_OVERFLOW49124
+Node: Examples49232
+Node: Basic Example49556
+Node: Using Call-back Functions50757
+Node: Reservoir Cycle Counting51979
+Node: Auxiliary Procedures53317
+Node: Symbol Index54564
+Node: Concept Index59507
+Node: References62710
 
 End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:
