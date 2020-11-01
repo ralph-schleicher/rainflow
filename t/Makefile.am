@@ -34,15 +34,16 @@
 ## Code:
 
 noinst_LTLIBRARIES = libex.la
-noinst_PROGRAMS = ex-basic ex-rainflow ex-reservoir ex-infinite \
-ex-read1 ex-read1-short ex-read2 ex-read2-short ex-rainflow-matrix
+noinst_PROGRAMS = ex-basic ex-rainflow ex-reservoir ex-infinite	\
+ex-read1 ex-read1-short ex-read2 ex-read2-short \
+ex-matrix1 ex-matrix1-round
 
 LDADD = libex.la
 
 libex_la_SOURCES = ex.h ex.c
 libex_la_LIBADD = ../librs-rainflow.la
 
-TESTS = t-infinite.sh t-rainflow.sh t-reservoir.sh
+TESTS = t-infinite.sh t-rainflow.sh t-reservoir.sh t-matrix1.sh
 AM_TESTS_ENVIRONMENT = srcdir='$(srcdir)'
 
 EXTRA_DIST = $(TESTS) \
