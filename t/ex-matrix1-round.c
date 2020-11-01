@@ -1,4 +1,4 @@
-/* ex-rainflow-matrix.c --- rainflow cycle counting.
+/* ex-matrix1-round.c --- rainflow cycle counting.
 
    Copyright (C) 2018 Ralph Schleicher
 
