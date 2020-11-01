@@ -1726,14 +1726,14 @@ struct rs_rainflow_matrix
   };
 
 /* Size of a rainflow matrix element.  */
-#define RAINFLOW_MATRIX_SIZE (3 * sizeof (double))
+#define MATRIX_ELEMENT_SIZE (3 * sizeof (double))
 
 /* Number of rainflow matrix elements to be added iff the rainflow
    matrix has to grow, 4096 / (3 * 8).  */
-#define RAINFLOW_MATRIX_ADD 170
+#define MATRIX_ELEMENTS_ADD 170
 
 /* Maximum number of rainflow matrix elements.  */
-#define RAINFLOW_MATRIX_MAX (SIZE_MAX / RAINFLOW_MATRIX_SIZE)
+#define MATRIX_ELEMENTS_MAX (SIZE_MAX / MATRIX_ELEMENT_SIZE)
 
 /* Comparison function for sorting rainflow matrix elements.  */
 static int
@@ -1757,8 +1757,8 @@ rs_rainflow_matrix_new (void)
   obj = calloc (1, sizeof (rs_rainflow_matrix_t));
   if (obj != NULL)
     {
-      obj->sparse = calloc (RAINFLOW_MATRIX_ADD, RAINFLOW_MATRIX_SIZE);
-      obj->sparse_count = RAINFLOW_MATRIX_ADD;
+      obj->sparse = calloc (MATRIX_ELEMENTS_ADD, MATRIX_ELEMENT_SIZE);
+      obj->sparse_count = MATRIX_ELEMENTS_ADD;
       obj->sparse_len = 0;
       obj->sparse_zero = 0;
 
@@ -1815,7 +1815,7 @@ matrix_add (rs_rainflow_matrix_t *obj, double const *cycle)
 
   if (cycle[2] > 0.0)
     {
-      entry = bsearch (cycle, obj->sparse, obj->sparse_len, RAINFLOW_MATRIX_SIZE, (void *) compare_keys);
+      entry = bsearch (cycle, obj->sparse, obj->sparse_len, MATRIX_ELEMENT_SIZE, (void *) compare_keys);
       if (entry != NULL)
 	{
 	  /* Add cycle count.  */
@@ -1830,18 +1830,18 @@ matrix_add (rs_rainflow_matrix_t *obj, double const *cycle)
 	  if (obj->sparse_len == obj->sparse_count)
 	    {
 	      /* Enlarge buffer.  */
-	      if (obj->sparse_count == RAINFLOW_MATRIX_MAX)
+	      if (obj->sparse_count == MATRIX_ELEMENTS_MAX)
 		{
 		  errno = ENOMEM;
 		  return -1;
 		}
 
 	      /* New length.  */
-	      c = (obj->sparse_count <= RAINFLOW_MATRIX_MAX - RAINFLOW_MATRIX_ADD ?
-		   obj->sparse_count + RAINFLOW_MATRIX_ADD :
-		   RAINFLOW_MATRIX_MAX);
+	      c = (obj->sparse_count <= MATRIX_ELEMENTS_MAX - MATRIX_ELEMENTS_ADD ?
+		   obj->sparse_count + MATRIX_ELEMENTS_ADD :
+		   MATRIX_ELEMENTS_MAX);
 
-	      p = realloc (obj->sparse, c * RAINFLOW_MATRIX_SIZE);
+	      p = realloc (obj->sparse, c * MATRIX_ELEMENT_SIZE);
 	      if (p == NULL)
 		return -1;
 
@@ -1861,8 +1861,8 @@ matrix_add (rs_rainflow_matrix_t *obj, double const *cycle)
 	      p += 3;
 	    }
 
-	  memmove (p + 3, p, c * RAINFLOW_MATRIX_SIZE);
-	  memcpy (p, cycle, RAINFLOW_MATRIX_SIZE);
+	  memmove (p + 3, p, c * MATRIX_ELEMENT_SIZE);
+	  memcpy (p, cycle, MATRIX_ELEMENT_SIZE);
 
 	  ++obj->sparse_len;
 	}
@@ -1907,7 +1907,7 @@ matrix_get (rs_rainflow_matrix_t *obj, double const *cycle)
       return NAN;
     }
 
-  entry = bsearch (cycle, obj->sparse, obj->sparse_len, RAINFLOW_MATRIX_SIZE, (void *) compare_keys);
+  entry = bsearch (cycle, obj->sparse, obj->sparse_len, MATRIX_ELEMENT_SIZE, (void *) compare_keys);
   if (entry != NULL)
     return entry[2];
 
