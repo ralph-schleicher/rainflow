@@ -1932,29 +1932,96 @@ rs_rainflow_matrix_get2 (rs_rainflow_matrix_t *obj, double first, double second)
   return matrix_get (obj, cycle);
 }
 
-/* Get the lower and upper bound of a rainflow matrix dimension.  */
-int
-rs_rainflow_matrix_limits (rs_rainflow_matrix_t *obj, int dim, double *_min, double *_max)
+/* Get the lower and upper bounds of a rainflow matrix.  */
+static int
+matrix_limits (rs_rainflow_matrix_t *obj, double *min, double *max)
 {
-  if (obj == NULL || dim < 0 || dim > 1)
+  double *p;
+  size_t c;
+  int any;
+
+  p = obj->sparse;
+  c = obj->sparse_len;
+
+  any = 0;
+
+  for (; c > 0; --c)
     {
-      errno = EINVAL;
-      return -1;
+      /* Only consider non-zero elements.  */
+      if (p[2] == 0.0)
+	continue;
+
+      if (any != 0)
+	{
+	  if (p[0] < min[0])
+	    min[0] = p[0];
+
+	  if (p[1] < min[1])
+	    min[1] = p[1];
+
+	  if (p[0] > max[0])
+	    max[0] = p[0];
+
+	  if (p[1] > max[1])
+	    max[1] = p[1];
+	}
+      else
+	{
+	  min[0] = p[0];
+	  min[1] = p[1];
+	  max[0] = p[0];
+	  max[1] = p[1];
+
+	  any = 1;
+	}
+
+      p += 3;
     }
 
-  if (obj->sparse_len == 0)
+  if (any == 0)
     {
       errno = ERANGE;
       return -1;
     }
 
-  if (_min != NULL)
-    *_min = obj->sparse[dim];
-
-  if (_max != NULL)
-    *_max = obj->sparse[dim + obj->sparse_len - 1];
-
   return 0;
+}
+
+/* Get the lower and upper bound of a rainflow matrix dimension.  */
+int
+rs_rainflow_matrix_limits (rs_rainflow_matrix_t *obj, int dim, double *_min, double *_max)
+{
+  double min[2], max[2];
+  int retval;
+
+  if (obj == NULL || dim > 1)
+    {
+      errno = EINVAL;
+      return -1;
+    }
+
+  retval = matrix_limits (obj, min, max);
+  if (retval == 0)
+    {
+      if (dim < 0)
+	{
+	  if (_min != NULL)
+	    memcpy (_min, min, 2 * sizeof (double));
+
+	  if (_max != NULL)
+	    memcpy (_max, max, 2 * sizeof (double));
+	}
+      else
+	{
+	  if (_min != NULL)
+	    *_min = min[dim];
+
+	  if (_max != NULL)
+	    *_max = max[dim];
+	}
+    }
+
+  return retval;
 }
 
 size_t
