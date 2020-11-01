@@ -1564,6 +1564,12 @@ First argument @var{obj} is a pointer to a rainflow matrix object.
 Second argument @var{dim} is the rainflow matrix dimension.  Value is
 either zero, i.e. the first dimension, or 1, i.e. the second dimension.
 
+If argument @var{dim} is less than zero, return the lower and upper
+bounds of both dimensions.  In this case arguments @var{min} and
+@var{max} have to be arrays with at least two elements.  The bounds of
+the first dimension are stored in the first array element and the bounds
+of the second dimension are stored in the second array element.
+
 @item
 Third argument @var{min} is the address where to store the value of the
 lower bound.  No value will be stored if @var{min} is a null pointer.
@@ -1579,7 +1585,7 @@ error conditions are defined for this function:
 
 @table @code
 @item EINVAL
-Argument @var{obj} is a null pointer.
+Argument @var{obj} is a null pointer or @var{dim} is greater than one.
 
 @item ERANGE
 The rainflow matrix is empty.
