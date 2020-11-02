@@ -13,8 +13,7 @@
 @iftex
 @finalout
 @paragraphindent 1
-@c @afourpaper
-@c @afourlatex
+@afourpaper
 @end iftex
 
 @setchapternewpage on
