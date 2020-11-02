@@ -2,7 +2,7 @@ This is rs-rainflow.info, produced by makeinfo version 6.7 from
 rs-rainflow.texi.
 
 This is the reference manual for the 'rs-rainflow' library version
-20180218.2240.
+20201101.1900.
 
 Copyright (C) 2015 Ralph Schleicher
 
@@ -21,7 +21,7 @@ Rainflow Cycle Counting
 ***********************
 
 This is the reference manual for the 'rs-rainflow' library version
-20180218.2240.
+20201101.1900.
 
 Copyright (C) 2015 Ralph Schleicher
 
@@ -518,7 +518,7 @@ adds the cycle to a rainflow matrix.
        double tem[3];
 
        memcpy (tem, cycle, 3 * sizeof (double));
-       /* Signal values are binned to a multiple or 20 MPa.  Thus, the signal
+       /* Signal values are binned to a multiple of 20 MPa.  Thus, the signal
           amplitude and signal mean are both binned to 10 MPa.  */
        rs_rainflow_round_amplitude_mean (tem, 20.0);
        rs_rainflow_matrix_add (mat, tem);
@@ -1175,6 +1175,13 @@ File: rs-rainflow.info,  Node: Functions,  Next: Enumerated Constants,  Prev: Da
           is either zero, i.e.  the first dimension, or 1, i.e.  the
           second dimension.
 
+          If argument DIM is less than zero, return the lower and upper
+          bounds of both dimensions.  In this case arguments MIN and MAX
+          have to be arrays with at least two elements.  The bounds of
+          the first dimension are stored in the first array element and
+          the bounds of the second dimension are stored in the second
+          array element.
+
         * Third argument MIN is the address where to store the value of
           the lower bound.  No value will be stored if MIN is a null
           pointer.
@@ -1188,7 +1195,7 @@ File: rs-rainflow.info,  Node: Functions,  Next: Enumerated Constants,  Prev: Da
      following error conditions are defined for this function:
 
      'EINVAL'
-          Argument OBJ is a null pointer.
+          Argument OBJ is a null pointer or DIM is greater than one.
 
      'ERANGE'
           The rainflow matrix is empty.
@@ -1559,20 +1566,20 @@ Symbol Index
 * rs_rainflow_matrix_get:                Functions.           (line 579)
 * rs_rainflow_matrix_get2:               Functions.           (line 601)
 * rs_rainflow_matrix_limits:             Functions.           (line 626)
-* rs_rainflow_matrix_map:                Functions.           (line 668)
+* rs_rainflow_matrix_map:                Functions.           (line 675)
 * rs_rainflow_matrix_new:                Functions.           (line 507)
-* rs_rainflow_matrix_non_zero:           Functions.           (line 654)
+* rs_rainflow_matrix_non_zero:           Functions.           (line 661)
 * rs_rainflow_matrix_t:                  Data Types.          (line  12)
 * rs_rainflow_merge_cycles:              Functions.           (line 481)
 * rs_rainflow_new:                       Functions.           (line   6)
 * rs_rainflow_reset:                     Functions.           (line  59)
-* rs_rainflow_round_amplitude_mean:      Functions.           (line 689)
-* rs_rainflow_round_down:                Functions.           (line 716)
-* rs_rainflow_round_from_to:             Functions.           (line 694)
-* rs_rainflow_round_inf:                 Functions.           (line 720)
-* rs_rainflow_round_range_mean:          Functions.           (line 691)
-* rs_rainflow_round_up:                  Functions.           (line 715)
-* rs_rainflow_round_zero:                Functions.           (line 718)
+* rs_rainflow_round_amplitude_mean:      Functions.           (line 696)
+* rs_rainflow_round_down:                Functions.           (line 723)
+* rs_rainflow_round_from_to:             Functions.           (line 701)
+* rs_rainflow_round_inf:                 Functions.           (line 727)
+* rs_rainflow_round_range_mean:          Functions.           (line 698)
+* rs_rainflow_round_up:                  Functions.           (line 722)
+* rs_rainflow_round_zero:                Functions.           (line 725)
 * rs_rainflow_set_cycle_sign:            Functions.           (line 436)
 * rs_rainflow_set_cycle_style:           Functions.           (line 417)
 * rs_rainflow_set_length:                Functions.           (line 210)
@@ -1732,47 +1739,47 @@ Ref: rs_rainflow_matrix_add340686
 Ref: rs_rainflow_matrix_get41747
 Ref: rs_rainflow_matrix_get242562
 Ref: rs_rainflow_matrix_limits43495
-Ref: rs_rainflow_matrix_non_zero44555
-Ref: rs_rainflow_matrix_map45031
-Ref: rs_rainflow_round_amplitude_mean45785
-Ref: rs_rainflow_round_range_mean45785
-Ref: rs_rainflow_round_from_to45785
-Ref: rs_rainflow_round_up46610
-Ref: rs_rainflow_round_down46610
-Ref: rs_rainflow_round_zero46610
-Ref: rs_rainflow_round_inf46610
-Node: Enumerated Constants47465
-Node: Array Element Types47668
-Ref: RS_RAINFLOW_TYPE_UNKNOWN47860
-Ref: RS_RAINFLOW_TYPE_DOUBLE47860
-Ref: RS_RAINFLOW_TYPE_FLOAT47860
-Ref: RS_RAINFLOW_TYPE_CHAR47860
-Ref: RS_RAINFLOW_TYPE_UCHAR47860
-Ref: RS_RAINFLOW_TYPE_SHORT47860
-Ref: RS_RAINFLOW_TYPE_USHORT47860
-Ref: RS_RAINFLOW_TYPE_INT47860
-Ref: RS_RAINFLOW_TYPE_UINT47860
-Ref: RS_RAINFLOW_TYPE_LONG47860
-Ref: RS_RAINFLOW_TYPE_ULONG47860
-Ref: RS_RAINFLOW_TYPE_INT8_T47860
-Ref: RS_RAINFLOW_TYPE_UINT8_T47860
-Ref: RS_RAINFLOW_TYPE_INT16_T47860
-Ref: RS_RAINFLOW_TYPE_UINT16_T47860
-Ref: RS_RAINFLOW_TYPE_INT32_T47860
-Ref: RS_RAINFLOW_TYPE_UINT32_T47860
-Ref: RS_RAINFLOW_TYPE_INT64_T47860
-Ref: RS_RAINFLOW_TYPE_UINT64_T47860
-Node: Extended Error Codes48864
-Ref: RS_RAINFLOW_ERROR_STACK_OVERFLOW49029
-Ref: RS_RAINFLOW_ERROR_CYCLE_OVERFLOW49124
-Node: Examples49232
-Node: Basic Example49556
-Node: Using Call-back Functions50757
-Node: Reservoir Cycle Counting51979
-Node: Auxiliary Procedures53317
-Node: Symbol Index54564
-Node: Concept Index59507
-Node: References62710
+Ref: rs_rainflow_matrix_non_zero44966
+Ref: rs_rainflow_matrix_map45442
+Ref: rs_rainflow_round_amplitude_mean46196
+Ref: rs_rainflow_round_range_mean46196
+Ref: rs_rainflow_round_from_to46196
+Ref: rs_rainflow_round_up47021
+Ref: rs_rainflow_round_down47021
+Ref: rs_rainflow_round_zero47021
+Ref: rs_rainflow_round_inf47021
+Node: Enumerated Constants47876
+Node: Array Element Types48079
+Ref: RS_RAINFLOW_TYPE_UNKNOWN48271
+Ref: RS_RAINFLOW_TYPE_DOUBLE48271
+Ref: RS_RAINFLOW_TYPE_FLOAT48271
+Ref: RS_RAINFLOW_TYPE_CHAR48271
+Ref: RS_RAINFLOW_TYPE_UCHAR48271
+Ref: RS_RAINFLOW_TYPE_SHORT48271
+Ref: RS_RAINFLOW_TYPE_USHORT48271
+Ref: RS_RAINFLOW_TYPE_INT48271
+Ref: RS_RAINFLOW_TYPE_UINT48271
+Ref: RS_RAINFLOW_TYPE_LONG48271
+Ref: RS_RAINFLOW_TYPE_ULONG48271
+Ref: RS_RAINFLOW_TYPE_INT8_T48271
+Ref: RS_RAINFLOW_TYPE_UINT8_T48271
+Ref: RS_RAINFLOW_TYPE_INT16_T48271
+Ref: RS_RAINFLOW_TYPE_UINT16_T48271
+Ref: RS_RAINFLOW_TYPE_INT32_T48271
+Ref: RS_RAINFLOW_TYPE_UINT32_T48271
+Ref: RS_RAINFLOW_TYPE_INT64_T48271
+Ref: RS_RAINFLOW_TYPE_UINT64_T48271
+Node: Extended Error Codes49275
+Ref: RS_RAINFLOW_ERROR_STACK_OVERFLOW49440
+Ref: RS_RAINFLOW_ERROR_CYCLE_OVERFLOW49535
+Node: Examples49643
+Node: Basic Example49967
+Node: Using Call-back Functions51168
+Node: Reservoir Cycle Counting52390
+Node: Auxiliary Procedures53728
+Node: Symbol Index54975
+Node: Concept Index59918
+Node: References63121
 
 End Tag Table
 
